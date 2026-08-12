@@ -1,0 +1,297 @@
+import io
+from datetime import date
+
+from fastapi.testclient import TestClient
+
+from app.main import create_app
+from app.models import Application, Base, User
+from app.security import hash_password
+
+
+class MemoryObjects:
+    def __init__(self) -> None:
+        self.objects: dict[str, bytes] = {}
+
+    def put(self, key: str, stream, length: int) -> None:
+        chunks = []
+        remaining = length
+        while remaining != 0:
+            chunk = stream.read(65536 if remaining < 0 else min(65536, remaining))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            if remaining > 0:
+                remaining -= len(chunk)
+        self.objects[key] = b"".join(chunks)
+
+    def open(self, key: str):
+        return io.BytesIO(self.objects[key])
+
+    def delete(self, key: str) -> None:
+        self.objects.pop(key, None)
+
+
+def setup() -> tuple[TestClient, str]:
+    app = create_app(
+        "sqlite+pysqlite:///:memory:", cookie_secure=True, object_store=MemoryObjects()
+    )
+    Base.metadata.create_all(app.state.database.engine)
+    with app.state.database.session() as db:
+        owner = User(
+            username="owner",
+            password_hash=hash_password("approval officer password"),
+            role="approval_officer",
+        )
+        other = User(
+            username="other",
+            password_hash=hash_password("approval officer password"),
+            role="approval_officer",
+        )
+        db.add_all([owner, other])
+        db.flush()
+        application = Application(
+            borrower_type="corporate",
+            borrower_name="示例企业",
+            product="经营贷",
+            application_date=date(2026, 8, 7),
+            owner_id=owner.id,
+        )
+        db.add(application)
+        db.commit()
+        application_id = application.id
+    return TestClient(app, base_url="https://testserver"), application_id
+
+
+def login(client: TestClient, username: str) -> dict[str, str]:
+    response = client.post(
+        "/api/v1/auth/login",
+        headers={"Origin": "https://testserver"},
+        json={"username": username, "password": "approval officer password"},
+    )
+    assert response.status_code == 204
+    return {"X-CSRF-Token": client.cookies["icrm_csrf"]}
+
+
+def upload(client: TestClient, application_id: str, headers: dict[str, str], key: str = "one"):
+    return client.post(
+        f"/api/v1/applications/{application_id}/documents",
+        headers={**headers, "Idempotency-Key": key},
+        files={"file": ("sample.pdf", b"%PDF-1.7\nsynthetic", "application/pdf")},
+    )
+
+
+def test_upload_returns_document_and_waiting_job_and_deduplicates() -> None:
+    client, application_id = setup()
+    with client:
+        csrf = login(client, "owner")
+        created = upload(client, application_id, csrf)
+        assert created.status_code == 202
+        assert created.json()["document"]["filename"] == "sample.pdf"
+        assert created.json()["job"]["status"] == "waiting"
+        assert [step["name"] for step in created.json()["job"]["steps"]] == [
+            "validation",
+            "parsing_ocr",
+            "structure_extraction",
+            "seal_detection",
+            "classification",
+            "candidate_extraction",
+        ]
+
+        replay = upload(client, application_id, csrf)
+        assert replay.status_code == 200
+        assert replay.json()["document"]["id"] == created.json()["document"]["id"]
+        mismatch = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "one"},
+            files={"file": ("other.pdf", b"%PDF-1.7\nother", "application/pdf")},
+        )
+        assert mismatch.status_code == 409
+
+        duplicate = upload(client, application_id, csrf, "two")
+        assert duplicate.status_code == 200
+        assert duplicate.json()["document"]["id"] == created.json()["document"]["id"]
+        reused_duplicate_key = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "two"},
+            files={"file": ("changed.pdf", b"%PDF-1.7\nchanged", "application/pdf")},
+        )
+        assert reused_duplicate_key.status_code == 409
+        same_bytes_changed_metadata = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "one"},
+            files={"file": ("renamed.pdf", b"%PDF-1.7\nsynthetic", "text/plain")},
+        )
+        assert same_bytes_changed_metadata.status_code == 409
+        assert [step["status"] for step in duplicate.json()["job"]["steps"]] == [
+            "waiting",
+            "not_applicable",
+            "not_applicable",
+            "not_applicable",
+            "not_applicable",
+            "not_applicable",
+        ]
+
+
+def test_upload_enforces_limits_and_owner_boundary() -> None:
+    client, application_id = setup()
+    client.app.state.document_limits.max_material_bytes = 8
+    with client:
+        csrf = login(client, "owner")
+        oversized = upload(client, application_id, csrf)
+        assert oversized.status_code == 202
+        assert oversized.json()["job"]["status"] == "failed"
+        assert oversized.json()["job"]["error_code"] == "material_size_limit_exceeded"
+        assert oversized.json()["document"]["id"]
+        assert len(oversized.json()["job"]["steps"]) == 6
+        replay = upload(client, application_id, csrf)
+        assert replay.status_code == 200
+        assert replay.json()["document"]["id"] == oversized.json()["document"]["id"]
+        client.app.state.document_limits.max_application_materials = 1
+        replay_at_capacity = upload(client, application_id, csrf)
+        assert replay_at_capacity.status_code == 200
+        duplicate_at_capacity = upload(client, application_id, csrf, "duplicate-at-capacity")
+        assert duplicate_at_capacity.status_code == 200
+        assert duplicate_at_capacity.json()["document"]["id"] == oversized.json()["document"]["id"]
+        another = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "another-oversized"},
+            files={"file": ("other.pdf", b"%PDF-1.7\ndifferent", "application/pdf")},
+        )
+        assert another.status_code == 413
+
+    client.cookies.clear()
+    with client:
+        csrf = login(client, "other")
+        assert upload(client, application_id, csrf).status_code == 404
+        assert client.get(f"/api/v1/applications/{application_id}/documents").status_code == 404
+
+
+def test_oversized_outcome_respects_application_size_limit() -> None:
+    client, application_id = setup()
+    client.app.state.document_limits.max_material_bytes = 8
+    client.app.state.document_limits.max_application_bytes = 25
+    with client:
+        csrf = login(client, "owner")
+        assert upload(client, application_id, csrf).status_code == 202
+        another = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "another-oversized-size"},
+            files={"file": ("other.pdf", b"%PDF-1.7\ndifferent", "application/pdf")},
+        )
+        assert another.status_code == 413
+
+
+def test_manual_handling_does_not_hide_another_waiting_material() -> None:
+    client, application_id = setup()
+    with client:
+        csrf = login(client, "owner")
+        assert upload(client, application_id, csrf).status_code == 202
+        manual = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "legacy-with-active"},
+            files={"file": ("legacy.doc", b"legacy", "application/msword")},
+        )
+        assert manual.status_code == 202
+        application = client.get(f"/api/v1/applications/{application_id}").json()
+        assert application["lifecycle_state"] == "processing"
+
+
+def test_unsupported_extension_is_explicit_manual_handling() -> None:
+    client, application_id = setup()
+    with client:
+        csrf = login(client, "owner")
+        response = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "legacy"},
+            files={"file": ("legacy.doc", b"legacy", "application/msword")},
+        )
+        assert response.status_code == 202
+        assert response.json()["job"]["status"] == "manual_handling"
+        assert response.json()["job"]["error_code"] == "unsupported_legacy_office"
+        application = client.get(f"/api/v1/applications/{application_id}").json()
+        assert application["lifecycle_state"] == "pending_review"
+
+
+def test_retry_requires_reason_and_owner() -> None:
+    client, application_id = setup()
+    with client:
+        csrf = login(client, "owner")
+        response = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "archive"},
+            files={"file": ("archive.zip", b"PK\x03\x04", "application/zip")},
+        )
+        job_id = response.json()["job"]["id"]
+        assert (
+            client.post(
+                f"/api/v1/jobs/{job_id}/retry", headers=csrf, json={"reason": ""}
+            ).status_code
+            == 422
+        )
+        retry_headers = {**csrf, "Idempotency-Key": "retry-archive"}
+        retry_payload = {"reason": "已重新确认材料格式", "selected_steps": ["validation"]}
+        retried = client.post(
+            f"/api/v1/jobs/{job_id}/retry",
+            headers=retry_headers,
+            json=retry_payload,
+        )
+        assert retried.status_code == 200
+        assert retried.json()["retry_reason"] == "已重新确认材料格式"
+        assert retried.json()["status"] == "waiting"
+        application = client.get(f"/api/v1/applications/{application_id}").json()
+        assert application["lifecycle_state"] == "processing"
+        replay = client.post(
+            f"/api/v1/jobs/{job_id}/retry",
+            headers=retry_headers,
+            json=retry_payload,
+        )
+        assert replay.status_code == 200
+        assert replay.json() == retried.json()
+        mismatch = client.post(
+            f"/api/v1/jobs/{job_id}/retry",
+            headers=retry_headers,
+            json={"reason": "不同理由", "selected_steps": ["validation"]},
+        )
+        assert mismatch.status_code == 409
+        rejected = client.post(
+            f"/api/v1/jobs/{job_id}/retry",
+            headers={**csrf, "Idempotency-Key": "invalid-step"},
+            json={"reason": "尝试运行后续步骤", "selected_steps": ["parsing_ocr"]},
+        )
+        assert rejected.status_code == 409
+
+    client.cookies.clear()
+    with client:
+        other_csrf = login(client, "other")
+        document_id = response.json()["document"]["id"]
+        assert client.get(f"/api/v1/documents/{document_id}/jobs").status_code == 404
+        unauthorized_retry = client.post(
+            f"/api/v1/jobs/{job_id}/retry",
+            headers={**other_csrf, "Idempotency-Key": "other-retry"},
+            json=retry_payload,
+        )
+        assert unauthorized_retry.status_code == 404
+
+
+def test_retrying_unchanged_unsupported_material_keeps_manual_outcome() -> None:
+    client, application_id = setup()
+    with client:
+        csrf = login(client, "owner")
+        uploaded = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "legacy-retry"},
+            files={"file": ("legacy.doc", b"legacy", "application/msword")},
+        )
+        job_id = uploaded.json()["job"]["id"]
+        retried = client.post(
+            f"/api/v1/jobs/{job_id}/retry",
+            headers={**csrf, "Idempotency-Key": "retry-legacy"},
+            json={"reason": "人工要求重试", "selected_steps": ["validation"]},
+        )
+        assert retried.status_code == 200
+        from app.worker import process_one
+
+        assert process_one(client.app.state.database, client.app.state.object_store, "worker")
+        status = client.get(f"/api/v1/documents/{uploaded.json()['document']['id']}/jobs").json()
+        assert status[-1]["status"] == "manual_handling"
+        assert status[-1]["error_code"] == "unsupported_legacy_office"

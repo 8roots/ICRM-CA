@@ -52,6 +52,13 @@ services:
     environment: &backend-environment
       ICRM_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-icrm}:${POSTGRES_PASSWORD:-local-development-only}@postgres:5432/${POSTGRES_DB:-icrm}
       ICRM_COOKIE_SECURE: "false"
+      ICRM_MINIO_ENDPOINT: minio:9000
+      ICRM_MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-icrm-local}
+      ICRM_MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-local-minio-password}
+      ICRM_MINIO_BUCKET: ${MINIO_BUCKET:-materials}
+      ICRM_MAX_MATERIAL_BYTES: ${ICRM_MAX_MATERIAL_BYTES:-209715200}
+      ICRM_MAX_APPLICATION_BYTES: ${ICRM_MAX_APPLICATION_BYTES:-2147483648}
+      ICRM_MAX_APPLICATION_MATERIALS: ${ICRM_MAX_APPLICATION_MATERIALS:-100}
     restart: "no"
 
   api:

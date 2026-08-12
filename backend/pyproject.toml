@@ -11,6 +11,8 @@ dependencies = [
   "psycopg[binary]==3.2.6",
   "sqlalchemy==2.0.40",
   "uvicorn[standard]==0.34.0",
+  "minio==7.2.15",
+  "python-multipart==0.0.20",
 ]
 
 [dependency-groups]
@@ -18,6 +20,7 @@ dev = [
   "httpx==0.28.1",
   "pytest==8.3.5",
   "ruff==0.11.2",
+  "testcontainers[minio,postgres]==4.10.0",
 ]
 
 [project.scripts]

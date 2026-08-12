@@ -126,6 +126,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/applications/{application_id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Documents */
+        get: operations["list_documents_api_v1_applications__application_id__documents_get"];
+        put?: never;
+        /** Upload Document */
+        post: operations["upload_document_api_v1_applications__application_id__documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Jobs */
+        get: operations["list_jobs_api_v1_documents__document_id__jobs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/{job_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Job */
+        post: operations["retry_job_api_v1_jobs__job_id__retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/live": {
         parameters: {
             query?: never;
@@ -198,6 +250,14 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** Body_upload_document_api_v1_applications__application_id__documents_post */
+        Body_upload_document_api_v1_applications__application_id__documents_post: {
+            /**
+             * File
+             * Format: binary
+             */
+            file: string;
+        };
         /** CreateUserRequest */
         CreateUserRequest: {
             /** Username */
@@ -210,10 +270,48 @@ export interface components {
              */
             enabled: boolean;
         };
+        /** DocumentResponse */
+        DocumentResponse: {
+            /** Id */
+            id: string;
+            /** Application Id */
+            application_id: string;
+            /** Filename */
+            filename: string;
+            /** Declared Mime */
+            declared_mime: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Sha256 */
+            sha256: string;
+            /** Processing Status */
+            processing_status: string;
+            /** Review Status */
+            review_status: string;
+            /** Jobs */
+            jobs: components["schemas"]["JobResponse"][];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** JobResponse */
+        JobResponse: {
+            /** Id */
+            id: string;
+            /** Document Id */
+            document_id: string;
+            /** Status */
+            status: string;
+            /** Attempts */
+            attempts: number;
+            /** Error Code */
+            error_code: string | null;
+            /** Retry Reason */
+            retry_reason: string | null;
+            /** Steps */
+            steps: components["schemas"]["StepResponse"][];
         };
         /** LoginRequest */
         LoginRequest: {
@@ -245,6 +343,27 @@ export interface components {
             /** Name */
             name: string;
         };
+        /**
+         * ProcessingStepName
+         * @enum {string}
+         */
+        ProcessingStepName: "validation" | "parsing_ocr" | "structure_extraction" | "seal_detection" | "classification" | "candidate_extraction";
+        /** RetryRequest */
+        RetryRequest: {
+            /** Reason */
+            reason: string;
+            /** Selected Steps */
+            selected_steps: components["schemas"]["ProcessingStepName"][];
+        };
+        /** StepResponse */
+        StepResponse: {
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+            /** Error Code */
+            error_code: string | null;
+        };
         /** UpdateApplicationRequest */
         UpdateApplicationRequest: {
             primary_borrower: components["schemas"]["PrimaryBorrower"];
@@ -266,6 +385,11 @@ export interface components {
             enabled: boolean;
             /** Version */
             version: number;
+        };
+        /** UploadResponse */
+        UploadResponse: {
+            document: components["schemas"]["DocumentResponse"];
+            job: components["schemas"]["JobResponse"];
         };
         /** UserResponse */
         UserResponse: {
@@ -627,6 +751,154 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApplicationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_documents_api_v1_applications__application_id__documents_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_document_api_v1_applications__application_id__documents_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_document_api_v1_applications__application_id__documents_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_jobs_api_v1_documents__document_id__jobs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_job_api_v1_jobs__job_id__retry_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                job_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobResponse"];
                 };
             };
             /** @description Validation Error */
