@@ -165,6 +165,10 @@ class PaddleEngine:
     ) -> None:
         from paddleocr import PaddleOCR, TextDetection, TextRecognition
 
+        # Importing paddleocr imports paddlex, which resets its logger to INFO;
+        # assert the quiet level before constructing models so normal worker logs
+        # never include model or image detail.
+        logging.getLogger("paddlex").setLevel(logging.WARNING)
         verify_artifacts(models_dir)
         models_dir = Path(models_dir)
         self.ocr = PaddleOCR(
@@ -193,6 +197,9 @@ class PaddleEngine:
             enable_mkldnn=enable_mkldnn,
             cpu_threads=cpu_threads,
         )
+        # paddlex may reconfigure its logger during construction; re-assert the
+        # quiet level once more before any inference happens.
+        logging.getLogger("paddlex").setLevel(logging.WARNING)
         self.version = f"{PADDLE_VERSION}-{DET_MODEL}-{REC_MODEL}-{SEAL_MODEL}"
 
     def analyze(self, image: bytes, *, run_ocr: bool) -> Analysis:
