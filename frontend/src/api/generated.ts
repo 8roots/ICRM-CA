@@ -250,6 +250,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/applications/{application_id}/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Candidates */
+        get: operations["list_candidates_api_v1_applications__application_id__candidates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/resolutions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Resolutions */
+        get: operations["list_resolutions_api_v1_applications__application_id__resolutions_get"];
+        put?: never;
+        /** Create Resolution */
+        post: operations["create_resolution_api_v1_applications__application_id__resolutions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/cloud-calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Cloud Calls */
+        get: operations["list_cloud_calls_api_v1_applications__application_id__cloud_calls_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/live": {
         parameters: {
             query?: never;
@@ -358,6 +410,49 @@ export interface components {
              */
             file: string;
         };
+        /** CandidateResponse */
+        CandidateResponse: {
+            /** Id */
+            id: string;
+            /** Document Id */
+            document_id: string;
+            /** Filename */
+            filename: string;
+            /** Output Id */
+            output_id: string;
+            /** Output Version */
+            output_version: number;
+            /** Field Key */
+            field_key: string;
+            /** Field Label */
+            field_label: string;
+            /** Group */
+            group: string;
+            /** Critical */
+            critical: boolean;
+            /** Subject Role */
+            subject_role: string | null;
+            /** Subject Label */
+            subject_label: string | null;
+            /** Raw Text */
+            raw_text: string;
+            /** Typed Value */
+            typed_value: {
+                [key: string]: unknown;
+            };
+            /** Confidence */
+            confidence: number;
+            /** Extractor */
+            extractor: string;
+            /** Extractor Version */
+            extractor_version: string;
+            /** Model Version */
+            model_version: string;
+            /** Prompt Version */
+            prompt_version: string | null;
+            /** Source Refs */
+            source_refs: components["schemas"]["SourceRefResponse"][];
+        };
         /** CellResponse */
         CellResponse: {
             /** Id */
@@ -379,6 +474,38 @@ export interface components {
             locator: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** CloudCallResponse */
+        CloudCallResponse: {
+            /** Id */
+            id: string;
+            /** Status */
+            status: string;
+            /** Error Code */
+            error_code: string | null;
+            /** Model */
+            model: string;
+            /** Prompt Version */
+            prompt_version: string;
+            /** Redaction Version */
+            redaction_version: string;
+            /** Source Refs */
+            source_refs: {
+                [key: string]: unknown;
+            }[];
+            /** Redacted Request */
+            redacted_request: {
+                [key: string]: unknown;
+            };
+            /** Redacted Response */
+            redacted_response: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** CreateUserRequest */
         CreateUserRequest: {
@@ -547,6 +674,58 @@ export interface components {
          * @enum {string}
          */
         ProcessingStepName: "validation" | "parsing_ocr" | "structure_extraction" | "seal_detection" | "classification" | "candidate_extraction";
+        /** ResolutionRequest */
+        ResolutionRequest: {
+            /**
+             * Resolution Type
+             * @enum {string}
+             */
+            resolution_type: "selected" | "corrected" | "manual";
+            /** Field Key */
+            field_key: string;
+            subject_role?: components["schemas"]["SubjectRole"] | null;
+            /** Candidate Id */
+            candidate_id?: string | null;
+            /**
+             * Value
+             * @default
+             */
+            value: string;
+            /** Reason */
+            reason?: string | null;
+        };
+        /** ResolutionResponse */
+        ResolutionResponse: {
+            /** Id */
+            id: string;
+            /** Application Id */
+            application_id: string;
+            /** Candidate Id */
+            candidate_id: string | null;
+            /** Field Key */
+            field_key: string;
+            /** Field Label */
+            field_label: string;
+            /** Subject Role */
+            subject_role: string | null;
+            /** Resolution Type */
+            resolution_type: string;
+            /** Typed Value */
+            typed_value: {
+                [key: string]: unknown;
+            };
+            /** No Material Source */
+            no_material_source: boolean;
+            /** Reason */
+            reason: string | null;
+            /** Actor Id */
+            actor_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** RetryRequest */
         RetryRequest: {
             /** Reason */
@@ -572,6 +751,35 @@ export interface components {
             /** Model Version */
             model_version: string;
         };
+        /** SourceRefResponse */
+        SourceRefResponse: {
+            /** Document Id */
+            document_id: string;
+            /** Output Id */
+            output_id: string;
+            /** Output Version */
+            output_version: number;
+            /** Page Number */
+            page_number: number | null;
+            /** Block Id */
+            block_id: string;
+            /** Block Order */
+            block_order: number;
+            /** Cell Id */
+            cell_id?: string | null;
+            /** Locator */
+            locator?: {
+                [key: string]: unknown;
+            } | null;
+            /** Bbox */
+            bbox?: unknown[] | null;
+            /** Cell Locator */
+            cell_locator?: {
+                [key: string]: unknown;
+            } | null;
+            /** Cell Bbox */
+            cell_bbox?: unknown[] | null;
+        };
         /** StepResponse */
         StepResponse: {
             /** Name */
@@ -581,6 +789,11 @@ export interface components {
             /** Error Code */
             error_code: string | null;
         };
+        /**
+         * SubjectRole
+         * @enum {string}
+         */
+        SubjectRole: "primary_borrower" | "legal_representative" | "shareholder" | "spouse" | "guarantor" | "collateral_owner";
         /** UpdateApplicationRequest */
         UpdateApplicationRequest: {
             primary_borrower: components["schemas"]["PrimaryBorrower"];
@@ -1290,6 +1503,146 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_candidates_api_v1_applications__application_id__candidates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CandidateResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_resolutions_api_v1_applications__application_id__resolutions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_resolution_api_v1_applications__application_id__resolutions_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolutionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_cloud_calls_api_v1_applications__application_id__cloud_calls_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CloudCallResponse"][];
                 };
             };
             /** @description Validation Error */

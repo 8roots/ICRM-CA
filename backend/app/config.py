@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     max_material_bytes: int = 200 * 1024 * 1024
     max_application_bytes: int = 2 * 1024 * 1024 * 1024
     max_application_materials: int = 100
+    deepseek_base_url: str = ""
+    deepseek_api_key: str = ""
+    deepseek_model: str = ""
 
 
 settings = Settings()

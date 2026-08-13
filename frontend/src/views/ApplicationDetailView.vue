@@ -103,6 +103,12 @@ onUnmounted(() => window.clearInterval(timer))
     </el-descriptions>
 
     <h2>材料处理</h2>
+    <p>
+      <router-link
+        class="candidate-link"
+        :to="`/applications/${route.params.id}/candidates`"
+      >字段候选复核与人工确认</router-link>
+    </p>
     <label class="upload-button">
       {{ uploading ? '上传中…' : '批量上传材料' }}
       <input type="file" multiple :disabled="uploading" @change="upload">
@@ -158,4 +164,5 @@ onUnmounted(() => window.clearInterval(timer))
 .upload-button { display: inline-block; margin-bottom: 16px; cursor: pointer; color: #1769aa; }
 .upload-button input { display: block; margin-top: 8px; }
 .download-link { margin-left: 8px; color: #1769aa; }
+.candidate-link { color: #1769aa; }
 </style>

@@ -13,6 +13,21 @@ export type CellResponse = components['schemas']['CellResponse']
 export type SealCandidateResponse = components['schemas']['SealCandidateResponse']
 export type EvidenceReviewResponse = components['schemas']['EvidenceReviewResponse']
 export type EvidenceReviewInput = components['schemas']['EvidenceReviewRequest']
+export type CandidateResponse = components['schemas']['CandidateResponse']
+export type ResolutionResponse = components['schemas']['ResolutionResponse']
+export type ResolutionInput = components['schemas']['ResolutionRequest']
+export type CloudCallResponse = components['schemas']['CloudCallResponse']
+export type TypedValue = {
+  type: string
+  value: string
+  raw_text?: string | null
+  unit?: string | null
+  currency?: string | null
+  period?: string | null
+  method?: string | null
+  date?: string | null
+  columns?: Record<string, string> | null
+}
 
 function csrfToken(): string {
   const cookie = document.cookie

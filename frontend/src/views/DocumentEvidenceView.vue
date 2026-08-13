@@ -137,6 +137,32 @@ async function refresh() {
   await loadPageImage()
 }
 
+async function focusFromQuery() {
+  const blockId = typeof route.query.block === 'string' ? route.query.block : null
+  const cellId = typeof route.query.cell === 'string' ? route.query.cell : null
+  if (!blockId || !latestOutput.value) return
+  if (isStructured.value) {
+    const found = structuredBlocks.value.find((block) => block.id === blockId)
+    if (!found) return
+    selectedBlockId.value = blockId
+    if (cellId && found.grid.flat().some((cell) => cell.id === cellId)) {
+      selectedCellId.value = cellId
+    }
+    nextTick(() =>
+      blockElements.get(blockId)?.scrollIntoView?.({ behavior: 'smooth', block: 'center' }),
+    )
+    return
+  }
+  for (const page of latestOutput.value.pages) {
+    if (!page.blocks.some((block) => block.id === blockId)) continue
+    if (page.number != null && page.number !== selectedPageNumber.value) {
+      await selectPage(page.number)
+    }
+    selectedBlockId.value = blockId
+    return
+  }
+}
+
 async function loadPageImage() {
   if (isStructured.value) return
   const response = await fetch(
@@ -218,6 +244,7 @@ async function rerunParser() {
 
 onMounted(async () => {
   await refresh()
+  await focusFromQuery()
   timer = window.setInterval(refresh, 3000)
 })
 onUnmounted(() => {

@@ -21,6 +21,10 @@ docker compose exec api icrm-create-admin administrator
 
 系统没有默认应用账号或密码。管理员登录后可在“账号管理”创建、启用或停用审批人员账号；审批人员可创建企业或个人申请，并且只能看到自己负责的申请。
 
+材料解析完成后，worker 会先运行本地确定性规则抽取字段候选（企业/个人主体、拟议贷款、财务报表行、银行流水行、征信与抵押担保等），并为缺失目标字段定位最小切片、以单申请稳定别名脱敏后调用 OpenAI 兼容的 DeepSeek。字段候选不可修改或删除；审批人员在“字段候选复核与人工确认”页按置信度复核候选，并可跳转到原页证据，生成“采用 / 修正 / 人工录入”三类确认记录，人工录入值必须填写理由并标记无材料来源。
+
+DeepSeek 默认关闭（仅在 `.env` 设置 `ICRM_DEEPSEEK_BASE_URL`、`ICRM_DEEPSEEK_API_KEY`、`ICRM_DEEPSEEK_MODEL` 后启用）。关闭或云端不可用时本地候选照常可用；脱敏失败会阻止云请求，只记录脱敏后的请求/响应审计（仅负责人可见）。
+
 停止服务：
 
 ```bash
@@ -45,7 +49,10 @@ uv sync --frozen
 uv run ruff check app tests alembic scripts
 uv run pytest
 uv run python scripts/export_openapi.py
+uv run python scripts/evaluate_extraction.py
 ```
+
+`scripts/evaluate_extraction.py` 对黄金集材料运行本地抽取并报告逐字段召回率/准确率（阈值：召回率 ≥ 0.9、准确率 ≥ 0.95），未达标时以非零码退出。
 
 数据库迁移：
 

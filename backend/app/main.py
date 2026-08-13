@@ -4,6 +4,7 @@ from sqlalchemy import text
 from app.admin import router as admin_router
 from app.applications import router as applications_router
 from app.auth import router as auth_router
+from app.candidates import router as candidates_router
 from app.config import settings
 from app.database import Database
 from app.document_outputs import router as document_outputs_router
@@ -33,6 +34,7 @@ def create_app(
     app.include_router(applications_router, prefix="/api/v1")
     app.include_router(documents_router, prefix="/api/v1")
     app.include_router(document_outputs_router, prefix="/api/v1")
+    app.include_router(candidates_router, prefix="/api/v1")
 
     @app.get("/health/live", tags=["health"])
     def live() -> dict[str, str]:

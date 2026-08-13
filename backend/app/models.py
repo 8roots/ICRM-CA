@@ -287,6 +287,114 @@ class EvidenceReview(Base):
     output: Mapped[DocumentOutput] = relationship(back_populates="reviews")
 
 
+class CandidateFact(Base):
+    """Immutable, source-backed field candidate produced by an extractor.
+
+    Candidates are never edited or deleted through the APIs; corrections and
+    manual values are recorded as separate :class:`Resolution` rows.
+    """
+
+    __tablename__ = "candidate_facts"
+    __table_args__ = (
+        UniqueConstraint(
+            "output_id",
+            "field_key",
+            "subject_role",
+            "raw_text",
+            "extractor",
+            name="uq_candidate_fact_signature",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    document_id: Mapped[str] = mapped_column(
+        ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    output_id: Mapped[str] = mapped_column(
+        ForeignKey("document_outputs.id", ondelete="CASCADE"), index=True
+    )
+    block_id: Mapped[str | None] = mapped_column(
+        ForeignKey("document_blocks.id", ondelete="CASCADE"), nullable=True
+    )
+    cell_id: Mapped[str | None] = mapped_column(
+        ForeignKey("table_cells.id", ondelete="CASCADE"), nullable=True
+    )
+    subject_role: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
+    field_key: Mapped[str] = mapped_column(String(60), index=True)
+    raw_text: Mapped[str] = mapped_column(Text)
+    typed_value: Mapped[dict] = mapped_column(JSON)
+    confidence: Mapped[float] = mapped_column()
+    extractor: Mapped[str] = mapped_column(String(30))
+    extractor_version: Mapped[str] = mapped_column(String(100))
+    model_version: Mapped[str] = mapped_column(String(100))
+    prompt_version: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    source_refs: Mapped[list] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    document: Mapped[Document] = relationship()
+
+
+class Resolution(Base):
+    """A rule-usable value explicitly created by the application owner.
+
+    ``selected`` copies an existing candidate, ``corrected`` fixes one, and
+    ``manual`` has no material source and must carry a reason.
+    """
+
+    __tablename__ = "resolutions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    application_id: Mapped[str] = mapped_column(
+        ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    )
+    candidate_id: Mapped[str | None] = mapped_column(
+        ForeignKey("candidate_facts.id", ondelete="CASCADE"), nullable=True
+    )
+    field_key: Mapped[str] = mapped_column(String(60), index=True)
+    subject_role: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    resolution_type: Mapped[str] = mapped_column(String(20))
+    typed_value: Mapped[dict] = mapped_column(JSON)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    actor_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    candidate: Mapped[CandidateFact | None] = relationship()
+
+
+class CloudExtractionCall(Base):
+    """Restricted audit record for one cloud extraction attempt.
+
+    Only redacted request/response content and metadata are stored; normal logs
+    never contain source, prompt, or response bodies.
+    """
+
+    __tablename__ = "cloud_extraction_calls"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    application_id: Mapped[str] = mapped_column(
+        ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    )
+    document_id: Mapped[str] = mapped_column(
+        ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    output_id: Mapped[str] = mapped_column(
+        ForeignKey("document_outputs.id", ondelete="CASCADE"), index=True
+    )
+    status: Mapped[str] = mapped_column(String(30))
+    error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    model: Mapped[str] = mapped_column(String(100))
+    prompt_version: Mapped[str] = mapped_column(String(100))
+    redaction_version: Mapped[str] = mapped_column(String(100))
+    source_refs: Mapped[list] = mapped_column(JSON)
+    redacted_request: Mapped[dict] = mapped_column(JSON)
+    redacted_response: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+
 class IdempotencyRecord(Base):
     __tablename__ = "idempotency_records"
     __table_args__ = (UniqueConstraint("actor_id", "operation", "key"),)

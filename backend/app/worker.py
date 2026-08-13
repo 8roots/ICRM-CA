@@ -8,10 +8,12 @@ from pathlib import Path
 
 from urllib3.exceptions import HTTPError as Urllib3Error
 
+from app.cloud_extraction import DeepSeekClient
 from app.config import settings
 from app.database import Database
 from app.document_jobs import claim_next_job, finish_job, recover_stale_jobs, renew_claim, utcnow
-from app.models import JobStatus, ProcessingStepName
+from app.extraction_service import run_candidate_extraction
+from app.models import DocumentOutput, JobStatus, ProcessingStepName
 from app.object_store import MinioObjects, minio_objects
 from app.paddle_engine import PaddleEngine
 from app.parsed_outputs import store_parsed_output
@@ -30,6 +32,7 @@ def process_one(
     objects: MinioObjects,
     worker_id: str,
     image_engine: ImageAnalysisEngine | None = None,
+    cloud_client: DeepSeekClient | None = None,
 ) -> bool:
     with database.session() as db:
         recover_stale_jobs(db, timedelta(minutes=5))
@@ -84,6 +87,30 @@ def process_one(
                             running_steps[name].status = output_status
                             running_steps[name].finished_at = utcnow()
                             running_steps[name].error_code = parse_error_code
+                    extraction_step = running_steps.get(ProcessingStepName.CANDIDATE_EXTRACTION)
+                    if extraction_step is not None:
+                        output = (
+                            db.query(DocumentOutput)
+                            .filter_by(document_id=job.document_id)
+                            .order_by(DocumentOutput.version.desc())
+                            .first()
+                        )
+                        if output and output.status in {
+                            JobStatus.SUCCESS,
+                            JobStatus.PARTIAL_SUCCESS,
+                        }:
+                            result = run_candidate_extraction(
+                                db, job.document, output, cloud_client
+                            )
+                            extraction_step.status = result.step_status
+                            extraction_step.error_code = result.error_code
+                            extraction_step.finished_at = utcnow()
+                            if result.step_status == JobStatus.PARTIAL_SUCCESS:
+                                output_status = JobStatus.PARTIAL_SUCCESS
+                                parse_error_code = result.error_code
+                        else:
+                            extraction_step.status = JobStatus.NOT_APPLICABLE
+                            extraction_step.finished_at = utcnow()
             finally:
                 stop_renewal.set()
                 renewal.join()
@@ -125,8 +152,13 @@ def run() -> None:
     objects = minio_objects(settings)
     worker_id = socket.gethostname()
     image_engine = PaddleEngine(settings.models_dir)
+    cloud_client = DeepSeekClient(
+        settings.deepseek_base_url,
+        settings.deepseek_api_key,
+        settings.deepseek_model,
+    )
     while True:
-        worked = process_one(database, objects, worker_id, image_engine)
+        worked = process_one(database, objects, worker_id, image_engine, cloud_client)
         heartbeat.touch()
         if not worked:
             time.sleep(2)

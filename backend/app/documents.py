@@ -194,7 +194,11 @@ def document_job(document: Document, job_status: JobStatus, error_code: str | No
     for step_name in PROCESSING_STEPS:
         is_validation = step_name == ProcessingStepName.VALIDATION
         should_run = is_validation or (
-            job_status == JobStatus.WAITING and step_name in parse_steps
+            job_status == JobStatus.WAITING
+            and (
+                step_name in parse_steps
+                or step_name == ProcessingStepName.CANDIDATE_EXTRACTION
+            )
         )
         job.steps.append(
             ProcessingStep(
@@ -473,6 +477,11 @@ def retry_job(
         for step in job.steps
         if step.name in {ProcessingStepName.PARSING_OCR, ProcessingStepName.SEAL_DETECTION}
         and step.status != JobStatus.NOT_APPLICABLE
+    } | {
+        step.name
+        for step in job.steps
+        if step.name == ProcessingStepName.CANDIDATE_EXTRACTION
+        and step.status in {JobStatus.FAILED, JobStatus.PARTIAL_SUCCESS, JobStatus.MANUAL_HANDLING}
     }
     if job.status in {JobStatus.SUCCESS, JobStatus.PARTIAL_SUCCESS}:
         allowed_steps = rerunnable_steps
@@ -482,6 +491,8 @@ def retry_job(
         raise HTTPException(status.HTTP_409_CONFLICT, "Job cannot be rerun while active")
     if not selected <= allowed_steps:
         raise HTTPException(status.HTTP_409_CONFLICT, "Selected steps cannot be rerun")
+    if selected & {ProcessingStepName.PARSING_OCR, ProcessingStepName.SEAL_DETECTION}:
+        selected.add(ProcessingStepName.CANDIDATE_EXTRACTION)
     job.status = JobStatus.WAITING
     job.error_code = None
     job.retry_reason = payload.reason

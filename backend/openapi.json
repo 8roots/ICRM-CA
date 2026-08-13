@@ -1412,6 +1412,301 @@
         }
       }
     },
+    "/api/v1/applications/{application_id}/candidates": {
+      "get": {
+        "tags": [
+          "candidates"
+        ],
+        "summary": "List Candidates",
+        "operationId": "list_candidates_api_v1_applications__application_id__candidates_get",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CandidateResponse"
+                  },
+                  "title": "Response List Candidates Api V1 Applications  Application Id  Candidates Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/applications/{application_id}/resolutions": {
+      "get": {
+        "tags": [
+          "candidates"
+        ],
+        "summary": "List Resolutions",
+        "operationId": "list_resolutions_api_v1_applications__application_id__resolutions_get",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResolutionResponse"
+                  },
+                  "title": "Response List Resolutions Api V1 Applications  Application Id  Resolutions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "candidates"
+        ],
+        "summary": "Create Resolution",
+        "operationId": "create_resolution_api_v1_applications__application_id__resolutions_post",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          },
+          {
+            "name": "icrm_csrf",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolutionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolutionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/applications/{application_id}/cloud-calls": {
+      "get": {
+        "tags": [
+          "candidates"
+        ],
+        "summary": "List Cloud Calls",
+        "operationId": "list_cloud_calls_api_v1_applications__application_id__cloud_calls_get",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CloudCallResponse"
+                  },
+                  "title": "Response List Cloud Calls Api V1 Applications  Application Id  Cloud Calls Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health/live": {
       "get": {
         "tags": [
@@ -1669,6 +1964,134 @@
         ],
         "title": "Body_upload_document_api_v1_applications__application_id__documents_post"
       },
+      "CandidateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "output_id": {
+            "type": "string",
+            "title": "Output Id"
+          },
+          "output_version": {
+            "type": "integer",
+            "title": "Output Version"
+          },
+          "field_key": {
+            "type": "string",
+            "title": "Field Key"
+          },
+          "field_label": {
+            "type": "string",
+            "title": "Field Label"
+          },
+          "group": {
+            "type": "string",
+            "title": "Group"
+          },
+          "critical": {
+            "type": "boolean",
+            "title": "Critical"
+          },
+          "subject_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Role"
+          },
+          "subject_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Label"
+          },
+          "raw_text": {
+            "type": "string",
+            "title": "Raw Text"
+          },
+          "typed_value": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Typed Value"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "extractor": {
+            "type": "string",
+            "title": "Extractor"
+          },
+          "extractor_version": {
+            "type": "string",
+            "title": "Extractor Version"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "prompt_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt Version"
+          },
+          "source_refs": {
+            "items": {
+              "$ref": "#/components/schemas/SourceRefResponse"
+            },
+            "type": "array",
+            "title": "Source Refs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "document_id",
+          "filename",
+          "output_id",
+          "output_version",
+          "field_key",
+          "field_label",
+          "group",
+          "critical",
+          "subject_role",
+          "subject_label",
+          "raw_text",
+          "typed_value",
+          "confidence",
+          "extractor",
+          "extractor_version",
+          "model_version",
+          "prompt_version",
+          "source_refs"
+        ],
+        "title": "CandidateResponse"
+      },
       "CellResponse": {
         "properties": {
           "id": {
@@ -1737,6 +2160,85 @@
           "locator"
         ],
         "title": "CellResponse"
+      },
+      "CloudCallResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version"
+          },
+          "redaction_version": {
+            "type": "string",
+            "title": "Redaction Version"
+          },
+          "source_refs": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Source Refs"
+          },
+          "redacted_request": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Redacted Request"
+          },
+          "redacted_response": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Redacted Response"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "error_code",
+          "model",
+          "prompt_version",
+          "redaction_version",
+          "source_refs",
+          "redacted_request",
+          "redacted_response",
+          "created_at"
+        ],
+        "title": "CloudCallResponse"
       },
       "CreateUserRequest": {
         "properties": {
@@ -2221,6 +2723,160 @@
         ],
         "title": "ProcessingStepName"
       },
+      "ResolutionRequest": {
+        "properties": {
+          "resolution_type": {
+            "type": "string",
+            "enum": [
+              "selected",
+              "corrected",
+              "manual"
+            ],
+            "title": "Resolution Type"
+          },
+          "field_key": {
+            "type": "string",
+            "title": "Field Key"
+          },
+          "subject_role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SubjectRole"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidate_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "value": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Value",
+            "default": ""
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "resolution_type",
+          "field_key"
+        ],
+        "title": "ResolutionRequest"
+      },
+      "ResolutionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "application_id": {
+            "type": "string",
+            "title": "Application Id"
+          },
+          "candidate_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "field_key": {
+            "type": "string",
+            "title": "Field Key"
+          },
+          "field_label": {
+            "type": "string",
+            "title": "Field Label"
+          },
+          "subject_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Role"
+          },
+          "resolution_type": {
+            "type": "string",
+            "title": "Resolution Type"
+          },
+          "typed_value": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Typed Value"
+          },
+          "no_material_source": {
+            "type": "boolean",
+            "title": "No Material Source"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "actor_id": {
+            "type": "string",
+            "title": "Actor Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "application_id",
+          "candidate_id",
+          "field_key",
+          "field_label",
+          "subject_role",
+          "resolution_type",
+          "typed_value",
+          "no_material_source",
+          "reason",
+          "actor_id",
+          "created_at"
+        ],
+        "title": "ResolutionResponse"
+      },
       "RetryRequest": {
         "properties": {
           "reason": {
@@ -2295,6 +2951,110 @@
         ],
         "title": "SealCandidateResponse"
       },
+      "SourceRefResponse": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "output_id": {
+            "type": "string",
+            "title": "Output Id"
+          },
+          "output_version": {
+            "type": "integer",
+            "title": "Output Version"
+          },
+          "page_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Number"
+          },
+          "block_id": {
+            "type": "string",
+            "title": "Block Id"
+          },
+          "block_order": {
+            "type": "integer",
+            "title": "Block Order"
+          },
+          "cell_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cell Id"
+          },
+          "locator": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locator"
+          },
+          "bbox": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bbox"
+          },
+          "cell_locator": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cell Locator"
+          },
+          "cell_bbox": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cell Bbox"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_id",
+          "output_id",
+          "output_version",
+          "page_number",
+          "block_id",
+          "block_order"
+        ],
+        "title": "SourceRefResponse"
+      },
       "StepResponse": {
         "properties": {
           "name": {
@@ -2324,6 +3084,18 @@
           "error_code"
         ],
         "title": "StepResponse"
+      },
+      "SubjectRole": {
+        "type": "string",
+        "enum": [
+          "primary_borrower",
+          "legal_representative",
+          "shareholder",
+          "spouse",
+          "guarantor",
+          "collateral_owner"
+        ],
+        "title": "SubjectRole"
       },
       "UpdateApplicationRequest": {
         "properties": {
