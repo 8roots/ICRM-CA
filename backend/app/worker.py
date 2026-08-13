@@ -8,6 +8,7 @@ from pathlib import Path
 
 from urllib3.exceptions import HTTPError as Urllib3Error
 
+from app.classification import run_classification
 from app.cloud_extraction import DeepSeekClient
 from app.config import settings
 from app.database import Database
@@ -88,7 +89,8 @@ def process_one(
                             running_steps[name].finished_at = utcnow()
                             running_steps[name].error_code = parse_error_code
                     extraction_step = running_steps.get(ProcessingStepName.CANDIDATE_EXTRACTION)
-                    if extraction_step is not None:
+                    classification_step = running_steps.get(ProcessingStepName.CLASSIFICATION)
+                    if extraction_step is not None or classification_step is not None:
                         output = (
                             db.query(DocumentOutput)
                             .filter_by(document_id=job.document_id)
@@ -99,18 +101,27 @@ def process_one(
                             JobStatus.SUCCESS,
                             JobStatus.PARTIAL_SUCCESS,
                         }:
-                            result = run_candidate_extraction(
-                                db, job.document, output, cloud_client
-                            )
-                            extraction_step.status = result.step_status
-                            extraction_step.error_code = result.error_code
-                            extraction_step.finished_at = utcnow()
-                            if result.step_status == JobStatus.PARTIAL_SUCCESS:
-                                output_status = JobStatus.PARTIAL_SUCCESS
-                                parse_error_code = result.error_code
+                            if classification_step is not None:
+                                run_classification(db, job.document, output)
+                                classification_step.status = JobStatus.SUCCESS
+                                classification_step.finished_at = utcnow()
+                            if extraction_step is not None:
+                                result = run_candidate_extraction(
+                                    db, job.document, output, cloud_client
+                                )
+                                extraction_step.status = result.step_status
+                                extraction_step.error_code = result.error_code
+                                extraction_step.finished_at = utcnow()
+                                if result.step_status == JobStatus.PARTIAL_SUCCESS:
+                                    output_status = JobStatus.PARTIAL_SUCCESS
+                                    parse_error_code = result.error_code
                         else:
-                            extraction_step.status = JobStatus.NOT_APPLICABLE
-                            extraction_step.finished_at = utcnow()
+                            if classification_step is not None:
+                                classification_step.status = JobStatus.NOT_APPLICABLE
+                                classification_step.finished_at = utcnow()
+                            if extraction_step is not None:
+                                extraction_step.status = JobStatus.NOT_APPLICABLE
+                                extraction_step.finished_at = utcnow()
             finally:
                 stop_renewal.set()
                 renewal.join()

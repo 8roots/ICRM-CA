@@ -18,6 +18,7 @@ async function logout() {
       <nav v-if="auth.user">
         <router-link v-if="auth.user.role === 'approval_officer'" to="/applications">申请</router-link>
         <router-link v-if="auth.user.role === 'administrator'" to="/admin/users">账号管理</router-link>
+        <router-link v-if="auth.user.role === 'administrator'" to="/admin/templates">模板管理</router-link>
         <el-button link @click="logout">退出</el-button>
       </nav>
     </el-header>

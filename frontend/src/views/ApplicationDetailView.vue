@@ -108,6 +108,11 @@ onUnmounted(() => window.clearInterval(timer))
         class="candidate-link"
         :to="`/applications/${route.params.id}/candidates`"
       >字段候选复核与人工确认</router-link>
+      <span class="link-sep">·</span>
+      <router-link
+        class="candidate-link"
+        :to="`/applications/${route.params.id}/completeness`"
+      >材料完备性与正式报告</router-link>
     </p>
     <label class="upload-button">
       {{ uploading ? '上传中…' : '批量上传材料' }}
@@ -165,4 +170,5 @@ onUnmounted(() => window.clearInterval(timer))
 .upload-button input { display: block; margin-top: 8px; }
 .download-link { margin-left: 8px; color: #1769aa; }
 .candidate-link { color: #1769aa; }
+.link-sep { margin: 0 8px; color: #c0c4cc; }
 </style>

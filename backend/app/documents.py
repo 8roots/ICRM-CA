@@ -197,7 +197,11 @@ def document_job(document: Document, job_status: JobStatus, error_code: str | No
             job_status == JobStatus.WAITING
             and (
                 step_name in parse_steps
-                or step_name == ProcessingStepName.CANDIDATE_EXTRACTION
+                or step_name
+                in {
+                    ProcessingStepName.CANDIDATE_EXTRACTION,
+                    ProcessingStepName.CLASSIFICATION,
+                }
             )
         )
         job.steps.append(
@@ -480,7 +484,11 @@ def retry_job(
     } | {
         step.name
         for step in job.steps
-        if step.name == ProcessingStepName.CANDIDATE_EXTRACTION
+        if step.name
+        in {
+            ProcessingStepName.CANDIDATE_EXTRACTION,
+            ProcessingStepName.CLASSIFICATION,
+        }
         and step.status in {JobStatus.FAILED, JobStatus.PARTIAL_SUCCESS, JobStatus.MANUAL_HANDLING}
     }
     if job.status in {JobStatus.SUCCESS, JobStatus.PARTIAL_SUCCESS}:
@@ -493,6 +501,7 @@ def retry_job(
         raise HTTPException(status.HTTP_409_CONFLICT, "Selected steps cannot be rerun")
     if selected & {ProcessingStepName.PARSING_OCR, ProcessingStepName.SEAL_DETECTION}:
         selected.add(ProcessingStepName.CANDIDATE_EXTRACTION)
+        selected.add(ProcessingStepName.CLASSIFICATION)
     job.status = JobStatus.WAITING
     job.error_code = None
     job.retry_reason = payload.reason

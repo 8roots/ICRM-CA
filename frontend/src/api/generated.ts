@@ -90,6 +90,92 @@ export interface paths {
         patch: operations["update_user_api_v1_admin_users__user_id__patch"];
         trace?: never;
     };
+    "/api/v1/admin/completeness-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Templates */
+        get: operations["list_templates_api_v1_admin_completeness_templates_get"];
+        put?: never;
+        /** Create Template */
+        post: operations["create_template_api_v1_admin_completeness_templates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/completeness-templates/{template_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Template */
+        put: operations["update_template_api_v1_admin_completeness_templates__template_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/completeness-templates/{template_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish Template */
+        post: operations["publish_template_api_v1_admin_completeness_templates__template_id__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/completeness-templates/{template_id}/copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Copy Template */
+        post: operations["copy_template_api_v1_admin_completeness_templates__template_id__copy_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/completeness-templates/{template_id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retire Template */
+        post: operations["retire_template_api_v1_admin_completeness_templates__template_id__retire_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/applications": {
         parameters: {
             query?: never;
@@ -302,6 +388,143 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/applications/{application_id}/completeness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Completeness */
+        get: operations["get_completeness_api_v1_applications__application_id__completeness_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/documents/{document_id}/classification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Classification */
+        post: operations["confirm_classification_api_v1_applications__application_id__documents__document_id__classification_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/mappings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Mapping */
+        post: operations["create_mapping_api_v1_applications__application_id__mappings_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/mappings/{mapping_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Mapping */
+        delete: operations["delete_mapping_api_v1_applications__application_id__mappings__mapping_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/waivers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Waiver */
+        post: operations["create_waiver_api_v1_applications__application_id__waivers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/completeness-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Completeness Runs */
+        get: operations["list_completeness_runs_api_v1_applications__application_id__completeness_runs_get"];
+        put?: never;
+        /** Create Completeness Run */
+        post: operations["create_completeness_run_api_v1_applications__application_id__completeness_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/completeness-runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Completeness Run */
+        get: operations["get_completeness_run_api_v1_applications__application_id__completeness_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/completeness-runs/{run_id}/printable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Printable Completeness Run */
+        get: operations["printable_completeness_run_api_v1_applications__application_id__completeness_runs__run_id__printable_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/live": {
         parameters: {
             query?: never;
@@ -475,6 +698,19 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** ClassificationCandidateResponse */
+        ClassificationCandidateResponse: {
+            /** Category */
+            category: string;
+            /** Category Label */
+            category_label: string;
+            /** Confidence */
+            confidence: number;
+            /** Method */
+            method: string;
+            /** Method Version */
+            method_version: string;
+        };
         /** CloudCallResponse */
         CloudCallResponse: {
             /** Id */
@@ -507,6 +743,86 @@ export interface components {
              */
             created_at: string;
         };
+        /** CompletenessDocumentResponse */
+        CompletenessDocumentResponse: {
+            /** Id */
+            id: string;
+            /** Filename */
+            filename: string;
+            /** Confirmed Category */
+            confirmed_category: string | null;
+            /** Classification Candidates */
+            classification_candidates: components["schemas"]["ClassificationCandidateResponse"][];
+            /** Seal Confirmed */
+            seal_confirmed: boolean;
+            /** Signature Confirmed */
+            signature_confirmed: boolean;
+        };
+        /** CompletenessItemResponse */
+        CompletenessItemResponse: {
+            /** Id */
+            id: string;
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /** Category */
+            category: string;
+            /** Category Label */
+            category_label: string;
+            /** Order */
+            order: number;
+            /** Requires Seal */
+            requires_seal: boolean;
+            /** Requires Signature */
+            requires_signature: boolean;
+            /** Condition */
+            condition: {
+                [key: string]: unknown;
+            } | null;
+            /** Condition Label */
+            condition_label: string | null;
+            /** State */
+            state: string;
+            /** State Label */
+            state_label: string;
+            /** Evidence Document Ids */
+            evidence_document_ids: string[];
+            /** Reason */
+            reason: string;
+        };
+        /** ConfirmClassificationRequest */
+        ConfirmClassificationRequest: {
+            category: components["schemas"]["MaterialCategory"];
+        };
+        /** CreateMappingRequest */
+        CreateMappingRequest: {
+            /** Document Id */
+            document_id: string;
+            /** Item Id */
+            item_id: string;
+        };
+        /** CreateTemplateRequest */
+        CreateTemplateRequest: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Product */
+            product: string;
+            /**
+             * Borrower Type
+             * @enum {string}
+             */
+            borrower_type: "corporate" | "individual";
+            /**
+             * Demo Only
+             * @default false
+             */
+            demo_only: boolean;
+            /** Items */
+            items: components["schemas"]["TemplateItemInput"][];
+        };
         /** CreateUserRequest */
         CreateUserRequest: {
             /** Username */
@@ -518,6 +834,13 @@ export interface components {
              * @default true
              */
             enabled: boolean;
+        };
+        /** CreateWaiverRequest */
+        CreateWaiverRequest: {
+            /** Item Id */
+            item_id: string;
+            /** Reason */
+            reason: string;
         };
         /** DocumentResponse */
         DocumentResponse: {
@@ -601,6 +924,30 @@ export interface components {
             /** Steps */
             steps: components["schemas"]["StepResponse"][];
         };
+        /** LiveDraftResponse */
+        LiveDraftResponse: {
+            /** Template */
+            template: {
+                [key: string]: unknown;
+            } | null;
+            /** No Template Reason */
+            no_template_reason: string | null;
+            /** Items */
+            items: components["schemas"]["CompletenessItemResponse"][];
+            /** Documents */
+            documents: components["schemas"]["CompletenessDocumentResponse"][];
+            /** Mappings */
+            mappings: components["schemas"]["MappingResponse"][];
+            /** Waivers */
+            waivers: components["schemas"]["WaiverResponse"][];
+            /** Condition Context */
+            condition_context: {
+                [key: string]: boolean;
+            };
+            latest_run: components["schemas"]["RunSummaryResponse"] | null;
+            /** Formal Run Blocked Reason */
+            formal_run_blocked_reason: string | null;
+        };
         /** LoginRequest */
         LoginRequest: {
             /** Username */
@@ -621,6 +968,33 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** MappingResponse */
+        MappingResponse: {
+            /** Id */
+            id: string;
+            /** Document Id */
+            document_id: string;
+            /** Document Filename */
+            document_filename: string;
+            /** Item Id */
+            item_id: string;
+            /** Item Code */
+            item_code: string;
+            /** Item Label */
+            item_label: string;
+            /** Actor Id */
+            actor_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * MaterialCategory
+         * @enum {string}
+         */
+        MaterialCategory: "basic_info" | "operation" | "loan_application" | "purpose" | "credit" | "collateral" | "other";
         /** OutputResponse */
         OutputResponse: {
             /** Id */
@@ -733,6 +1107,64 @@ export interface components {
             /** Selected Steps */
             selected_steps: components["schemas"]["ProcessingStepName"][];
         };
+        /** RunDetailResponse */
+        RunDetailResponse: {
+            /** Id */
+            id: string;
+            /** Application Id */
+            application_id: string;
+            /** Template Snapshot */
+            template_snapshot: {
+                [key: string]: unknown;
+            };
+            /** Input Snapshot */
+            input_snapshot: {
+                [key: string]: unknown;
+            };
+            /** Result Snapshot */
+            result_snapshot: {
+                [key: string]: unknown;
+            };
+            /** Content Hash */
+            content_hash: string;
+            /** Status */
+            status: string;
+            /** Stale */
+            stale: boolean;
+            /** Stale Reason */
+            stale_reason: string | null;
+            /** Actor Id */
+            actor_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** RunSummaryResponse */
+        RunSummaryResponse: {
+            /** Id */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Status */
+            status: string;
+            /** Stale */
+            stale: boolean;
+            /** Stale Reason */
+            stale_reason: string | null;
+            /** Content Hash */
+            content_hash: string;
+            /** Template Code */
+            template_code: string;
+            /** Template Version */
+            template_version: number;
+            /** Actor Id */
+            actor_id: string;
+        };
         /** SealCandidateResponse */
         SealCandidateResponse: {
             /** Id */
@@ -794,6 +1226,81 @@ export interface components {
          * @enum {string}
          */
         SubjectRole: "primary_borrower" | "legal_representative" | "shareholder" | "spouse" | "guarantor" | "collateral_owner";
+        /** TemplateItemInput */
+        TemplateItemInput: {
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            category: components["schemas"]["MaterialCategory"];
+            /**
+             * Requires Seal
+             * @default false
+             */
+            requires_seal: boolean;
+            /**
+             * Requires Signature
+             * @default false
+             */
+            requires_signature: boolean;
+            /** Condition */
+            condition?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** TemplateItemResponse */
+        TemplateItemResponse: {
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /** Category */
+            category: string;
+            /** Category Label */
+            category_label: string;
+            /** Order */
+            order: number;
+            /** Requires Seal */
+            requires_seal: boolean;
+            /** Requires Signature */
+            requires_signature: boolean;
+            /** Condition */
+            condition: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** TemplateResponse */
+        TemplateResponse: {
+            /** Id */
+            id: string;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Product */
+            product: string;
+            /** Borrower Type */
+            borrower_type: string;
+            /** Version */
+            version: number;
+            /** Status */
+            status: string;
+            /** Demo Only */
+            demo_only: boolean;
+            /** Content Hash */
+            content_hash: string;
+            /** Published At */
+            published_at: string | null;
+            /** Retired At */
+            retired_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Items */
+            items: components["schemas"]["TemplateItemResponse"][];
+        };
         /** UpdateApplicationRequest */
         UpdateApplicationRequest: {
             primary_borrower: components["schemas"]["PrimaryBorrower"];
@@ -808,6 +1315,16 @@ export interface components {
             proposed_signing_date?: string | null;
             /** Version */
             version: number;
+        };
+        /**
+         * UpdateTemplateRequest
+         * @description Draft-only edit; published/retired versions stay immutable.
+         */
+        UpdateTemplateRequest: {
+            /** Name */
+            name: string;
+            /** Items */
+            items: components["schemas"]["TemplateItemInput"][];
         };
         /** UpdateUserRequest */
         UpdateUserRequest: {
@@ -838,6 +1355,26 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** WaiverResponse */
+        WaiverResponse: {
+            /** Id */
+            id: string;
+            /** Item Id */
+            item_id: string;
+            /** Item Code */
+            item_code: string;
+            /** Item Label */
+            item_label: string;
+            /** Reason */
+            reason: string;
+            /** Actor Id */
+            actor_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
     };
     responses: never;
@@ -1038,6 +1575,223 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ManagedUserResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_templates_api_v1_admin_completeness_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_template_api_v1_admin_completeness_templates_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_template_api_v1_admin_completeness_templates__template_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                template_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_template_api_v1_admin_completeness_templates__template_id__publish_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                template_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    copy_template_api_v1_admin_completeness_templates__template_id__copy_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                template_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retire_template_api_v1_admin_completeness_templates__template_id__retire_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                template_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1643,6 +2397,336 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CloudCallResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_completeness_api_v1_applications__application_id__completeness_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiveDraftResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_classification_api_v1_applications__application_id__documents__document_id__classification_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+                document_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmClassificationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompletenessDocumentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_mapping_api_v1_applications__application_id__mappings_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMappingRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MappingResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_mapping_api_v1_applications__application_id__mappings__mapping_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+                mapping_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_waiver_api_v1_applications__application_id__waivers_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWaiverRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaiverResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_completeness_runs_api_v1_applications__application_id__completeness_runs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunSummaryResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_completeness_run_api_v1_applications__application_id__completeness_runs_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_completeness_run_api_v1_applications__application_id__completeness_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+                run_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    printable_completeness_run_api_v1_applications__application_id__completeness_runs__run_id__printable_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+                run_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

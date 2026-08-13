@@ -1,10 +1,15 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from sqlalchemy import text
 
 from app.admin import router as admin_router
+from app.admin_templates import router as admin_templates_router
 from app.applications import router as applications_router
 from app.auth import router as auth_router
 from app.candidates import router as candidates_router
+from app.completeness import seed_demo_templates
+from app.completeness_api import router as completeness_router
 from app.config import settings
 from app.database import Database
 from app.document_outputs import router as document_outputs_router
@@ -17,11 +22,24 @@ def create_app(
     database_url: str | None = None,
     *,
     cookie_secure: bool | None = None,
+    production: bool | None = None,
     object_store=None,
 ) -> FastAPI:
-    app = FastAPI(title="ICRM-CA API", version="0.1.0")
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI):
+        # Demo-only templates ship for development and synthetic-material demos;
+        # production mode skips seeding and rejects demo templates for formal
+        # completeness reports.
+        if not app.state.production:
+            with app.state.database.session() as db:
+                seed_demo_templates(db)
+        yield
+
+    app = FastAPI(title="ICRM-CA API", version="0.1.0", lifespan=lifespan)
     app.state.database = Database(database_url or settings.database_url)
     app.state.cookie_secure = settings.cookie_secure if cookie_secure is None else cookie_secure
+    app.state.production = settings.production if production is None else production
     app.state.session_hours = settings.session_hours
     app.state.document_limits = DocumentLimits(
         settings.max_material_bytes,
@@ -29,12 +47,15 @@ def create_app(
         settings.max_application_materials,
     )
     app.state.object_store = object_store or minio_objects(settings)
+
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(admin_router, prefix="/api/v1")
+    app.include_router(admin_templates_router, prefix="/api/v1")
     app.include_router(applications_router, prefix="/api/v1")
     app.include_router(documents_router, prefix="/api/v1")
     app.include_router(document_outputs_router, prefix="/api/v1")
     app.include_router(candidates_router, prefix="/api/v1")
+    app.include_router(completeness_router, prefix="/api/v1")
 
     @app.get("/health/live", tags=["health"])
     def live() -> dict[str, str]:

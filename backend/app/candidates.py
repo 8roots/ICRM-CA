@@ -14,6 +14,7 @@ from typing import Literal
 from fastapi import APIRouter, Header, HTTPException, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.completeness import mark_runs_stale
 from app.dependencies import Csrf, CurrentUser, Db
 from app.fields import FIELDS, SUBJECT_LABELS, SubjectRole, field_def
 from app.idempotency import add_idempotency_record, replay_resource_id
@@ -328,6 +329,9 @@ def create_resolution(
     add_idempotency_record(
         db, user.id, operation, idempotency_key, request_hash, resolution.id
     )
+    # Resolutions feed completeness condition context (e.g. collateral presence),
+    # so they invalidate any current formal completeness report.
+    mark_runs_stale(db, application_id, "condition_context_change")
     db.commit()
     return as_resolution(resolution)
 

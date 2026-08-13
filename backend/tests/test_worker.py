@@ -307,6 +307,74 @@ def test_unexpected_validator_error_is_permanent_not_transient(queued_job, monke
         assert job.attempts == 1
 
 
+def test_worker_classifies_material_content_and_stores_candidates() -> None:
+    import pymupdf
+
+    pdf = pymupdf.open()
+    page = pdf.new_page(width=400, height=200)
+    page.insert_text(
+        (30, 50),
+        "借款申请书 贷款申请 授信申请 企业名称：示例公司",
+        fontname="china-s",
+    )
+    content = pdf.tobytes()
+
+    class PdfObjects:
+        def open(self, key: str):
+            return io.BytesIO(content)
+
+    class Engine:
+        version = "test-model-1"
+
+        def analyze(self, image: bytes, *, run_ocr: bool) -> Analysis:
+            assert not run_ocr
+            return Analysis()
+
+    app = create_app("sqlite+pysqlite:///:memory:", object_store=PdfObjects())
+    Base.metadata.create_all(app.state.database.engine)
+    with app.state.database.session() as db:
+        user = User(username="classify-owner", password_hash="hash", role="approval_officer")
+        db.add(user)
+        db.flush()
+        application = Application(
+            borrower_type="corporate",
+            borrower_name="分类企业",
+            product="经营贷",
+            application_date=date(2026, 8, 7),
+            owner_id=user.id,
+        )
+        db.add(application)
+        db.flush()
+        document = Document(
+            application_id=application.id,
+            filename="classify.pdf",
+            extension=".pdf",
+            declared_mime="application/pdf",
+            size_bytes=len(content),
+            sha256="f" * 64,
+            object_key="classify",
+        )
+        db.add(document)
+        db.flush()
+        job = DocumentJob(document_id=document.id)
+        for name in ("validation", "parsing_ocr", "seal_detection", "classification"):
+            job.steps.append(ProcessingStep(name=name, status="waiting"))
+        db.add(job)
+        db.commit()
+
+    assert process_one(app.state.database, PdfObjects(), "classify-worker", Engine())
+    with app.state.database.session() as db:
+        from app.models import MaterialClassificationCandidate
+
+        categories = {
+            row.category
+            for row in db.query(MaterialClassificationCandidate).all()
+        }
+        assert "loan_application" in categories
+        steps = {step.name: step.status for step in db.get(DocumentJob, job.id).steps}
+        assert steps["classification"] == "success"
+
+
 def test_worker_parses_structured_xlsx_without_image_engine() -> None:
     import openpyxl
 

@@ -127,7 +127,7 @@ def test_upload_returns_document_and_waiting_job_and_deduplicates() -> None:
             "waiting",
             "not_applicable",
             "waiting",
-            "not_applicable",
+            "waiting",
             "waiting",
         ]
 

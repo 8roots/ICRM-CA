@@ -17,6 +17,17 @@ export type CandidateResponse = components['schemas']['CandidateResponse']
 export type ResolutionResponse = components['schemas']['ResolutionResponse']
 export type ResolutionInput = components['schemas']['ResolutionRequest']
 export type CloudCallResponse = components['schemas']['CloudCallResponse']
+export type ClassificationCandidateResponse = components['schemas']['ClassificationCandidateResponse']
+export type CompletenessDocumentResponse = components['schemas']['CompletenessDocumentResponse']
+export type CompletenessItemResponse = components['schemas']['CompletenessItemResponse']
+export type LiveDraftResponse = components['schemas']['LiveDraftResponse']
+export type MappingResponse = components['schemas']['MappingResponse']
+export type WaiverResponse = components['schemas']['WaiverResponse']
+export type RunSummaryResponse = components['schemas']['RunSummaryResponse']
+export type RunDetailResponse = components['schemas']['RunDetailResponse']
+export type TemplateResponse = components['schemas']['TemplateResponse']
+export type TemplateItemInput = components['schemas']['TemplateItemInput']
+export type CreateTemplateRequest = components['schemas']['CreateTemplateRequest']
 export type TypedValue = {
   type: string
   value: string

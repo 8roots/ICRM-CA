@@ -50,6 +50,25 @@ class ReviewStatus(StrEnum):
     REVIEW_COMPLETE = "review_complete"
 
 
+class TemplateStatus(StrEnum):
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    RETIRED = "retired"
+
+
+class ItemState(StrEnum):
+    SATISFIED = "satisfied"
+    MISSING = "missing"
+    PENDING_CONFIRMATION = "pending_confirmation"
+    NOT_APPLICABLE = "not_applicable"
+    MANUALLY_WAIVED = "manually_waived"
+
+
+class RunStatus(StrEnum):
+    CURRENT = "current"
+    STALE = "stale"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -390,6 +409,167 @@ class CloudExtractionCall(Base):
     source_refs: Mapped[list] = mapped_column(JSON)
     redacted_request: Mapped[dict] = mapped_column(JSON)
     redacted_response: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+
+class CompletenessTemplate(Base):
+    """A versioned completeness checklist keyed by product x borrower type.
+
+    Versions are immutable once published; changes go through copy-to-change
+    which creates a new draft version with the same ``code``.
+    """
+
+    __tablename__ = "completeness_templates"
+    __table_args__ = (UniqueConstraint("code", "version"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    code: Mapped[str] = mapped_column(String(60), index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    product: Mapped[str] = mapped_column(String(100), index=True)
+    borrower_type: Mapped[str] = mapped_column(String(20), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(20), default=TemplateStatus.DRAFT, index=True)
+    demo_only: Mapped[bool] = mapped_column(Boolean, default=False)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    retired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    items: Mapped[list["ChecklistItem"]] = relationship(
+        back_populates="template", cascade="all, delete-orphan", order_by="ChecklistItem.order"
+    )
+
+
+class ChecklistItem(Base):
+    __tablename__ = "checklist_items"
+    __table_args__ = (UniqueConstraint("template_id", "code"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    template_id: Mapped[str] = mapped_column(
+        ForeignKey("completeness_templates.id", ondelete="CASCADE"), index=True
+    )
+    code: Mapped[str] = mapped_column(String(60))
+    label: Mapped[str] = mapped_column(String(200))
+    category: Mapped[str] = mapped_column(String(30), index=True)
+    order: Mapped[int] = mapped_column(Integer)
+    requires_seal: Mapped[bool] = mapped_column(Boolean, default=False)
+    requires_signature: Mapped[bool] = mapped_column(Boolean, default=False)
+    condition: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    template: Mapped[CompletenessTemplate] = relationship(back_populates="items")
+
+
+class MaterialClassificationCandidate(Base):
+    """Content-based material-category candidate produced by the worker."""
+
+    __tablename__ = "material_classification_candidates"
+    __table_args__ = (UniqueConstraint("document_id", "category", "method"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    document_id: Mapped[str] = mapped_column(
+        ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    category: Mapped[str] = mapped_column(String(30), index=True)
+    confidence: Mapped[float] = mapped_column()
+    method: Mapped[str] = mapped_column(String(30))
+    method_version: Mapped[str] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    document: Mapped[Document] = relationship()
+
+
+class ClassificationConfirmation(Base):
+    """Human confirmation of one material category per document."""
+
+    __tablename__ = "classification_confirmations"
+    __table_args__ = (UniqueConstraint("document_id",),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    application_id: Mapped[str] = mapped_column(
+        ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    )
+    document_id: Mapped[str] = mapped_column(
+        ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    category: Mapped[str] = mapped_column(String(30))
+    actor_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+
+class DocumentChecklistMapping(Base):
+    """Confirmed many-to-many evidence mapping between a document and an item."""
+
+    __tablename__ = "document_checklist_mappings"
+    __table_args__ = (UniqueConstraint("application_id", "document_id", "item_id"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    application_id: Mapped[str] = mapped_column(
+        ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    )
+    document_id: Mapped[str] = mapped_column(
+        ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    item_id: Mapped[str] = mapped_column(
+        ForeignKey("checklist_items.id", ondelete="CASCADE"), index=True
+    )
+    actor_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    document: Mapped[Document] = relationship()
+    item: Mapped[ChecklistItem] = relationship()
+
+
+class WaiverRecord(Base):
+    """Manual waiver of a checklist item with mandatory audit trail."""
+
+    __tablename__ = "waiver_records"
+    __table_args__ = (UniqueConstraint("application_id", "item_id"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    application_id: Mapped[str] = mapped_column(
+        ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    )
+    item_id: Mapped[str] = mapped_column(
+        ForeignKey("checklist_items.id", ondelete="CASCADE"), index=True
+    )
+    reason: Mapped[str] = mapped_column(Text)
+    actor_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    item: Mapped[ChecklistItem] = relationship()
+
+
+class CompletenessRun(Base):
+    """Immutable formal completeness snapshot with content hash.
+
+    ``status`` is ``current`` when created and flips to ``stale`` when any
+    completeness input changes (mapping, waiver, classification, evidence
+    review) or when the applicable published template version changes.
+    """
+
+    __tablename__ = "completeness_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    application_id: Mapped[str] = mapped_column(
+        ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    )
+    template_id: Mapped[str] = mapped_column(
+        ForeignKey("completeness_templates.id", ondelete="CASCADE")
+    )
+    template_snapshot: Mapped[dict] = mapped_column(JSON)
+    input_snapshot: Mapped[dict] = mapped_column(JSON)
+    result_snapshot: Mapped[dict] = mapped_column(JSON)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(20), default=RunStatus.CURRENT, index=True)
+    stale_reason: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    actor_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )

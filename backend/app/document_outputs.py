@@ -5,6 +5,7 @@ from typing import Literal
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.completeness import mark_runs_stale
 from app.dependencies import Csrf, CurrentUser, Db
 from app.idempotency import add_idempotency_record, replay_resource_id
 from app.models import (
@@ -263,6 +264,7 @@ def create_review(
     add_idempotency_record(
         db, user.id, operation, idempotency_key, request_hash, review.id
     )
+    mark_runs_stale(db, output.document.application_id, "evidence_review_change")
     db.commit()
     return as_review(review)
 
