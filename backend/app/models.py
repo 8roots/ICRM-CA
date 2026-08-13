@@ -3,6 +3,7 @@ from datetime import UTC, date, datetime
 from enum import StrEnum
 
 from sqlalchemy import (
+    JSON,
     BigInteger,
     Boolean,
     Date,
@@ -192,9 +193,9 @@ class DocumentPage(Base):
     output_id: Mapped[str] = mapped_column(
         ForeignKey("document_outputs.id", ondelete="CASCADE"), index=True
     )
-    number: Mapped[int] = mapped_column(Integer)
-    width: Mapped[float] = mapped_column()
-    height: Mapped[float] = mapped_column()
+    number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    width: Mapped[float | None] = mapped_column(nullable=True)
+    height: Mapped[float | None] = mapped_column(nullable=True)
     status: Mapped[str] = mapped_column(String(30))
     error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
     output: Mapped[DocumentOutput] = relationship(back_populates="pages")
@@ -217,12 +218,13 @@ class DocumentBlock(Base):
     order: Mapped[int] = mapped_column(Integer)
     kind: Mapped[str] = mapped_column(String(30))
     text: Mapped[str] = mapped_column(Text)
-    x0: Mapped[float] = mapped_column()
-    y0: Mapped[float] = mapped_column()
-    x1: Mapped[float] = mapped_column()
-    y1: Mapped[float] = mapped_column()
+    x0: Mapped[float | None] = mapped_column(nullable=True)
+    y0: Mapped[float | None] = mapped_column(nullable=True)
+    x1: Mapped[float | None] = mapped_column(nullable=True)
+    y1: Mapped[float | None] = mapped_column(nullable=True)
     extraction_method: Mapped[str] = mapped_column(String(30))
     confidence: Mapped[float | None] = mapped_column(nullable=True)
+    locator: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     page: Mapped[DocumentPage] = relationship(back_populates="blocks")
     cells: Mapped[list["TableCell"]] = relationship(
         back_populates="block", cascade="all, delete-orphan"
@@ -244,6 +246,7 @@ class TableCell(Base):
     y0: Mapped[float | None] = mapped_column(nullable=True)
     x1: Mapped[float | None] = mapped_column(nullable=True)
     y1: Mapped[float | None] = mapped_column(nullable=True)
+    locator: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     block: Mapped[DocumentBlock] = relationship(back_populates="cells")
 
 

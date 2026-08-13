@@ -3,11 +3,14 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated
+from urllib.parse import quote
 
 from fastapi import APIRouter, File, Header, HTTPException, Request, Response, UploadFile, status
+from minio.error import S3Error
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
+from starlette.responses import StreamingResponse
 
 from app.dependencies import Csrf, CurrentUser, Db
 from app.idempotency import add_idempotency_record, replay_resource_id
@@ -21,11 +24,15 @@ from app.models import (
     ProcessingStepName,
     ReviewStatus,
 )
+from app.parsing import IMAGE_EXTENSIONS, PDF_EXTENSIONS
+from app.structured import STRUCTURED_EXTENSIONS
 
 router = APIRouter(tags=["documents"])
 
 PROCESSING_STEPS = tuple(ProcessingStepName)
-PARSE_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tif", ".tiff"}
+PAGE_FORMAT_EXTENSIONS = PDF_EXTENSIONS | IMAGE_EXTENSIONS
+PAGE_PARSE_STEPS = {ProcessingStepName.PARSING_OCR, ProcessingStepName.SEAL_DETECTION}
+STRUCTURED_PARSE_STEPS = {ProcessingStepName.PARSING_OCR}
 
 
 @dataclass
@@ -178,13 +185,16 @@ def enforce_application_capacity(
 
 def document_job(document: Document, job_status: JobStatus, error_code: str | None) -> DocumentJob:
     job = DocumentJob(document=document, status=job_status, error_code=error_code)
-    parse_steps = {ProcessingStepName.PARSING_OCR, ProcessingStepName.SEAL_DETECTION}
+    if document.extension in PAGE_FORMAT_EXTENSIONS:
+        parse_steps = PAGE_PARSE_STEPS
+    elif document.extension in STRUCTURED_EXTENSIONS:
+        parse_steps = STRUCTURED_PARSE_STEPS
+    else:
+        parse_steps = set()
     for step_name in PROCESSING_STEPS:
         is_validation = step_name == ProcessingStepName.VALIDATION
         should_run = is_validation or (
-            job_status == JobStatus.WAITING
-            and document.extension in PARSE_EXTENSIONS
-            and step_name in parse_steps
+            job_status == JobStatus.WAITING and step_name in parse_steps
         )
         job.steps.append(
             ProcessingStep(
@@ -393,6 +403,39 @@ def list_jobs(document_id: str, db: Db, user: CurrentUser) -> list[JobResponse]:
     if not document:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
     return [as_job(job) for job in document.jobs]
+
+
+@router.get("/documents/{document_id}/download")
+def download_document(
+    document_id: str,
+    request: Request,
+    db: Db,
+    user: CurrentUser,
+) -> StreamingResponse:
+    """Stream the original material to its application owner."""
+    document = (
+        db.query(Document)
+        .join(Application)
+        .filter(Document.id == document_id, Application.owner_id == user.id)
+        .first()
+    )
+    if not document:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
+    try:
+        source = request.app.state.object_store.open(document.object_key)
+    except (S3Error, KeyError):
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, "Original material is not available"
+        ) from None
+    return StreamingResponse(
+        source,
+        media_type=document.declared_mime or "application/octet-stream",
+        headers={
+            "Content-Disposition": (
+                f"attachment; filename*=UTF-8''{quote(document.filename)}"
+            )
+        },
+    )
 
 
 @router.post("/jobs/{job_id}/retry", response_model=JobResponse)

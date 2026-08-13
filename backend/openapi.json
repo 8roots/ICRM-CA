@@ -946,6 +946,63 @@
         }
       }
     },
+    "/api/v1/documents/{document_id}/download": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Download Document",
+        "description": "Stream the original material to its application owner.",
+        "operationId": "download_document_api_v1_documents__document_id__download_get",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/jobs/{job_id}/retry": {
       "post": {
         "tags": [
@@ -1523,23 +1580,30 @@
             "title": "Text"
           },
           "bbox": {
-            "prefixItems": [
+            "anyOf": [
               {
-                "type": "number"
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 4,
+                "minItems": 4
               },
               {
-                "type": "number"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "number"
+                "type": "null"
               }
             ],
-            "type": "array",
-            "maxItems": 4,
-            "minItems": 4,
             "title": "Bbox"
           },
           "extraction_method": {
@@ -1563,6 +1627,18 @@
             },
             "type": "array",
             "title": "Cells"
+          },
+          "locator": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locator"
           }
         },
         "type": "object",
@@ -1574,7 +1650,8 @@
           "bbox",
           "extraction_method",
           "confidence",
-          "cells"
+          "cells",
+          "locator"
         ],
         "title": "BlockResponse"
       },
@@ -1636,6 +1713,18 @@
               }
             ],
             "title": "Bbox"
+          },
+          "locator": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locator"
           }
         },
         "type": "object",
@@ -1644,7 +1733,8 @@
           "row",
           "column",
           "text",
-          "bbox"
+          "bbox",
+          "locator"
         ],
         "title": "CellResponse"
       },
@@ -1971,6 +2061,10 @@
             "type": "string",
             "title": "Document Id"
           },
+          "format": {
+            "type": "string",
+            "title": "Format"
+          },
           "version": {
             "type": "integer",
             "title": "Version"
@@ -1999,6 +2093,7 @@
         "required": [
           "id",
           "document_id",
+          "format",
           "version",
           "status",
           "parser_version",
@@ -2014,15 +2109,36 @@
             "title": "Id"
           },
           "number": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Number"
           },
           "width": {
-            "type": "number",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Width"
           },
           "height": {
-            "type": "number",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Height"
           },
           "status": {

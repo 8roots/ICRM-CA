@@ -129,3 +129,8 @@ def test_mismatch_and_encryption_outcomes(
         validate(document(filename, mime), io.BytesIO(content))
     assert caught.value.code == code
     assert caught.value.manual_handling is manual
+
+
+def test_gb18030_csv_and_markdown_without_bom_are_supported() -> None:
+    validate(document("a.csv", "text/csv"), io.BytesIO("列,值\n甲,100".encode("gb18030")))
+    validate(document("a.md", "text/markdown"), io.BytesIO("# 标题".encode("gb18030")))

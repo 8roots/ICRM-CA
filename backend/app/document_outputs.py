@@ -15,9 +15,25 @@ from app.models import (
     EvidenceReview,
     SealCandidate,
 )
-from app.parsing import render_preview
+from app.parsing import IMAGE_EXTENSIONS, render_preview
 
 router = APIRouter(tags=["document-outputs"])
+
+
+def document_format(extension: str) -> str:
+    if extension == ".pdf":
+        return "pdf"
+    if extension in IMAGE_EXTENSIONS:
+        return "image"
+    if extension == ".docx":
+        return "docx"
+    if extension == ".xlsx":
+        return "xlsx"
+    if extension == ".csv":
+        return "csv"
+    if extension in {".md", ".markdown"}:
+        return "markdown"
+    return "other"
 
 
 class CellResponse(BaseModel):
@@ -26,6 +42,7 @@ class CellResponse(BaseModel):
     column: int
     text: str
     bbox: tuple[float, float, float, float] | None
+    locator: dict | None
 
 
 class BlockResponse(BaseModel):
@@ -33,10 +50,11 @@ class BlockResponse(BaseModel):
     order: int
     kind: str
     text: str
-    bbox: tuple[float, float, float, float]
+    bbox: tuple[float, float, float, float] | None
     extraction_method: str
     confidence: float | None
     cells: list[CellResponse]
+    locator: dict | None
 
 
 class SealCandidateResponse(BaseModel):
@@ -49,9 +67,9 @@ class SealCandidateResponse(BaseModel):
 
 class PageResponse(BaseModel):
     id: str
-    number: int
-    width: float
-    height: float
+    number: int | None
+    width: float | None
+    height: float | None
     status: str
     error_code: str | None
     blocks: list[BlockResponse]
@@ -80,6 +98,7 @@ class EvidenceReviewResponse(BaseModel):
 class OutputResponse(BaseModel):
     id: str
     document_id: str
+    format: str
     version: int
     status: str
     parser_version: str
@@ -120,6 +139,7 @@ def as_output(output: DocumentOutput) -> OutputResponse:
     return OutputResponse(
         id=output.id,
         document_id=output.document_id,
+        format=document_format(output.document.extension),
         version=output.version,
         status=output.status,
         parser_version=output.parser_version,
@@ -138,7 +158,11 @@ def as_output(output: DocumentOutput) -> OutputResponse:
                         order=block.order,
                         kind=block.kind,
                         text=block.text,
-                        bbox=(block.x0, block.y0, block.x1, block.y1),
+                        bbox=(
+                            (block.x0, block.y0, block.x1, block.y1)
+                            if block.x0 is not None
+                            else None
+                        ),
                         extraction_method=block.extraction_method,
                         confidence=block.confidence,
                         cells=[
@@ -152,9 +176,11 @@ def as_output(output: DocumentOutput) -> OutputResponse:
                                     if cell.x0 is not None
                                     else None
                                 ),
+                                locator=cell.locator,
                             )
                             for cell in block.cells
                         ],
+                        locator=block.locator,
                     )
                     for block in page.blocks
                 ],

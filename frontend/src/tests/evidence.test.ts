@@ -179,3 +179,146 @@ test('提交印章候选确认与签字人工确认', async () => {
   })
   expect(wrapper.text()).toContain('原页可见红色印章')
 })
+
+
+const docxOutput = {
+  id: 'output-docx',
+  document_id: 'document-1',
+  format: 'docx',
+  version: 1,
+  status: 'success',
+  parser_version: 'python-docx-1.1.2',
+  model_version: 'none',
+  pages: [
+    {
+      id: 'page-docx',
+      number: null,
+      width: null,
+      height: null,
+      status: 'success',
+      error_code: null,
+      blocks: [
+        {
+          id: 'block-heading',
+          order: 0,
+          kind: 'heading',
+          text: '企业概况',
+          bbox: null,
+          extraction_method: 'docx_text',
+          confidence: null,
+          cells: [],
+          locator: { kind: 'docx', paragraph_path: 'body/1' },
+        },
+        {
+          id: 'block-paragraph',
+          order: 1,
+          kind: 'paragraph',
+          text: '示例企业成立于2015年。',
+          bbox: null,
+          extraction_method: 'docx_text',
+          confidence: null,
+          cells: [],
+          locator: { kind: 'docx', paragraph_path: 'body/2' },
+        },
+        {
+          id: 'block-table',
+          order: 2,
+          kind: 'table',
+          text: '科目',
+          bbox: null,
+          extraction_method: 'docx_text',
+          confidence: null,
+          cells: [
+            { id: 'cell-1', row: 1, column: 1, text: '科目', bbox: null, locator: null },
+            { id: 'cell-2', row: 1, column: 2, text: '金额', bbox: null, locator: null },
+            { id: 'cell-3', row: 2, column: 1, text: '营业收入', bbox: null, locator: null },
+            { id: 'cell-4', row: 2, column: 2, text: '1,234,567.89', bbox: null, locator: null },
+          ],
+          locator: { kind: 'docx', paragraph_path: 'body/3' },
+        },
+      ],
+      seals: [],
+    },
+  ],
+}
+
+test('结构化预览渲染 DOCX 块与表格，不请求原页图片，单元格可跳转原生位置', async () => {
+  const fetchMock = vi.spyOn(globalThis, 'fetch')
+    .mockResolvedValueOnce(Response.json([docxOutput]))
+    .mockResolvedValueOnce(Response.json(jobs))
+    .mockResolvedValueOnce(Response.json([]))
+
+  const wrapper = await mountEvidence()
+
+  expect(wrapper.text()).toContain('企业概况')
+  expect(wrapper.text()).toContain('示例企业成立于2015年。')
+  expect(wrapper.text()).toContain('营业收入')
+  expect(wrapper.text()).toContain('路径 body/1')
+  expect(wrapper.text()).toContain('路径 body/3')
+  expect(wrapper.text()).not.toContain('第 1 页原页')
+  expect(wrapper.text()).not.toContain('印章候选（未经人工确认）')
+  expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/pages/'))).toBe(false)
+
+  await wrapper.get('[aria-label="定位解析块-block-table"]').trigger('click')
+  await flushPromises()
+  expect(wrapper.find('.structured-block.target').exists()).toBe(true)
+
+  await wrapper.get('[aria-label="表格单元格-营业收入"]').trigger('click')
+  await flushPromises()
+  expect(wrapper.text()).toContain('选中单元格：第 2 行 · 第 1 列')
+  expect(wrapper.get('a.download-link').attributes('href')).toBe(
+    '/api/v1/documents/document-1/download',
+  )
+})
+
+test('结构化预览中 XLSX 单元格展示工作表与单元格引用', async () => {
+  const xlsxOutput = {
+    id: 'output-xlsx',
+    document_id: 'document-1',
+    format: 'xlsx',
+    version: 1,
+    status: 'success',
+    parser_version: 'openpyxl-3.1.5',
+    model_version: 'none',
+    pages: [
+      {
+        id: 'page-xlsx',
+        number: null,
+        width: null,
+        height: null,
+        status: 'success',
+        error_code: null,
+        blocks: [
+          {
+            id: 'block-sheet',
+            order: 0,
+            kind: 'table',
+            text: '日期',
+            bbox: null,
+            extraction_method: 'xlsx_text',
+            confidence: null,
+            cells: [
+              { id: 'x1', row: 1, column: 1, text: '日期', bbox: null, locator: { kind: 'xlsx', sheet: '流水明细', cell: 'A1' } },
+              { id: 'x2', row: 1, column: 2, text: '金额', bbox: null, locator: { kind: 'xlsx', sheet: '流水明细', cell: 'B1' } },
+              { id: 'x3', row: 2, column: 1, text: '2026-08-01', bbox: null, locator: { kind: 'xlsx', sheet: '流水明细', cell: 'A2' } },
+              { id: 'x4', row: 2, column: 2, text: '1234.5', bbox: null, locator: { kind: 'xlsx', sheet: '流水明细', cell: 'B2' } },
+            ],
+            locator: { kind: 'xlsx', sheet: '流水明细', cell_range: 'A1:B2' },
+          },
+        ],
+        seals: [],
+      },
+    ],
+  }
+  vi.spyOn(globalThis, 'fetch')
+    .mockResolvedValueOnce(Response.json([xlsxOutput]))
+    .mockResolvedValueOnce(Response.json(jobs))
+    .mockResolvedValueOnce(Response.json([]))
+
+  const wrapper = await mountEvidence()
+
+  expect(wrapper.text()).toContain('工作表 流水明细 · 范围 A1:B2')
+  await wrapper.get('[aria-label="表格单元格-1234.5"]').trigger('click')
+  await flushPromises()
+  expect(wrapper.text()).toContain('选中单元格：工作表 流水明细 · 单元格 B2')
+})

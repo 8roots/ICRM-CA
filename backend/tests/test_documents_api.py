@@ -552,3 +552,175 @@ def test_retrying_unchanged_unsupported_material_keeps_manual_outcome() -> None:
         status = client.get(f"/api/v1/documents/{uploaded.json()['document']['id']}/jobs").json()
         assert status[-1]["status"] == "manual_handling"
         assert status[-1]["error_code"] == "unsupported_legacy_office"
+
+
+def test_docx_upload_runs_parsing_without_seal_detection() -> None:
+    import docx
+
+    document = docx.Document()
+    document.add_paragraph("经营情况说明")
+    buffer = io.BytesIO()
+    document.save(buffer)
+
+    client, application_id = setup()
+    with client:
+        csrf = login(client, "owner")
+        created = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "docx"},
+            files={
+                "file": (
+                    "statement.docx",
+                    buffer.getvalue(),
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                )
+            },
+        )
+        assert created.status_code == 202
+        steps = {
+            step["name"]: step["status"] for step in created.json()["job"]["steps"]
+        }
+        assert steps["validation"] == "waiting"
+        assert steps["parsing_ocr"] == "waiting"
+        assert steps["seal_detection"] == "not_applicable"
+        assert steps["structure_extraction"] == "not_applicable"
+
+
+def test_owner_downloads_original_material_and_boundary_is_enforced() -> None:
+    client, application_id = setup()
+    with client:
+        csrf = login(client, "owner")
+        created = upload(client, application_id, csrf)
+        document_id = created.json()["document"]["id"]
+        download = client.get(f"/api/v1/documents/{document_id}/download")
+        assert download.status_code == 200
+        assert download.content == b"%PDF-1.7\nsynthetic"
+        assert download.headers["content-type"] == "application/pdf"
+        assert "attachment" in download.headers["content-disposition"]
+
+        with client.app.state.database.session() as db:
+            from app.models import Document as DocumentModel
+
+            object_key = db.get(DocumentModel, document_id).object_key
+        client.app.state.object_store.delete(object_key)
+        assert (
+            client.get(f"/api/v1/documents/{document_id}/download").status_code == 404
+        )
+
+    client.cookies.clear()
+    with client:
+        csrf = login(client, "other")
+        assert (
+            client.get(f"/api/v1/documents/{document_id}/download").status_code == 404
+        )
+
+
+def test_structured_outputs_expose_format_and_native_locators_without_pages() -> None:
+    import openpyxl
+
+    from app.parsed_outputs import store_parsed_output
+    from app.structured import parse_structured
+
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "流水明细"
+    sheet.append(["日期", "金额"])
+    sheet.append(["2026-08-01", 1234.5])
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+
+    client, application_id = setup()
+    with client:
+        csrf = login(client, "owner")
+        uploaded = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "xlsx-output"},
+            files={
+                "file": (
+                    "statement.xlsx",
+                    buffer.getvalue(),
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            },
+        )
+        document_id = uploaded.json()["document"]["id"]
+        parsed = parse_structured(
+            "statement.xlsx", io.BytesIO(buffer.getvalue())
+        )
+        with client.app.state.database.session() as db:
+            store_parsed_output(db, document_id, parsed)
+            db.commit()
+
+        outputs = client.get(f"/api/v1/documents/{document_id}/outputs")
+        assert outputs.status_code == 200
+        output = outputs.json()[0]
+        assert output["format"] == "xlsx"
+        assert output["status"] == "success"
+        page = output["pages"][0]
+        assert page["number"] is None
+        assert page["width"] is None
+        block = page["blocks"][0]
+        assert block["kind"] == "table"
+        assert block["locator"] == {
+            "kind": "xlsx",
+            "paragraph_path": None,
+            "sheet": "流水明细",
+            "cell_range": "A1:B2",
+            "cell": None,
+            "row": None,
+            "column": None,
+            "column_name": None,
+            "encoding": None,
+            "heading_path": None,
+            "line_start": None,
+            "line_end": None,
+        }
+        assert block["cells"][0]["locator"]["cell"] == "A1"
+        assert block["cells"][3]["text"] == "1234.5"
+        # Structured formats never get a page image endpoint.
+        assert (
+            client.get(f"/api/v1/documents/{document_id}/pages/1/image").status_code
+            == 404
+        )
+
+
+def test_structured_rerun_selects_only_the_parsing_step() -> None:
+    import docx
+
+    document = docx.Document()
+    document.add_paragraph("经营情况说明")
+    buffer = io.BytesIO()
+    document.save(buffer)
+
+    client, application_id = setup()
+    with client:
+        csrf = login(client, "owner")
+        uploaded = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "docx-rerun"},
+            files={
+                "file": (
+                    "statement.docx",
+                    buffer.getvalue(),
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                )
+            },
+        )
+        job_id = uploaded.json()["job"]["id"]
+        with client.app.state.database.session() as db:
+            from app.document_jobs import claim_next_job, finish_job
+
+            claimed = claim_next_job(db, "api-test")
+            finish_job(db, claimed, "success", claim_token=claimed.claim_token)
+        rerun = client.post(
+            f"/api/v1/jobs/{job_id}/retry",
+            headers={**csrf, "Idempotency-Key": "docx-rerun-1"},
+            json={"reason": "重新解析", "selected_steps": ["parsing_ocr"]},
+        )
+        assert rerun.status_code == 200
+        rejected = client.post(
+            f"/api/v1/jobs/{job_id}/retry",
+            headers={**csrf, "Idempotency-Key": "docx-rerun-2"},
+            json={"reason": "印章步骤不适用", "selected_steps": ["seal_detection"]},
+        )
+        assert rejected.status_code == 409

@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -40,12 +42,13 @@ def store_parsed_output(db: Session, document_id: str, parsed: ParsedOutput) -> 
                 order=parsed_block.order,
                 kind=parsed_block.kind,
                 text=parsed_block.text,
-                x0=parsed_block.bbox[0],
-                y0=parsed_block.bbox[1],
-                x1=parsed_block.bbox[2],
-                y1=parsed_block.bbox[3],
+                x0=parsed_block.bbox[0] if parsed_block.bbox else None,
+                y0=parsed_block.bbox[1] if parsed_block.bbox else None,
+                x1=parsed_block.bbox[2] if parsed_block.bbox else None,
+                y1=parsed_block.bbox[3] if parsed_block.bbox else None,
                 extraction_method=parsed_block.extraction_method,
                 confidence=parsed_block.confidence,
+                locator=asdict(parsed_block.locator) if parsed_block.locator else None,
             )
             for parsed_cell in parsed_block.cells:
                 block.cells.append(
@@ -57,6 +60,7 @@ def store_parsed_output(db: Session, document_id: str, parsed: ParsedOutput) -> 
                         y0=parsed_cell.bbox[1] if parsed_cell.bbox else None,
                         x1=parsed_cell.bbox[2] if parsed_cell.bbox else None,
                         y1=parsed_cell.bbox[3] if parsed_cell.bbox else None,
+                        locator=asdict(parsed_cell.locator) if parsed_cell.locator else None,
                     )
                 )
             page.blocks.append(block)

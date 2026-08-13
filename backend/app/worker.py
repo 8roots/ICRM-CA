@@ -15,12 +15,14 @@ from app.models import JobStatus, ProcessingStepName
 from app.object_store import MinioObjects, minio_objects
 from app.paddle_engine import PaddleEngine
 from app.parsed_outputs import store_parsed_output
-from app.parsing import ImageAnalysisEngine, parse_material
+from app.parsing import IMAGE_EXTENSIONS, PDF_EXTENSIONS, ImageAnalysisEngine, parse_material
+from app.structured import parse_structured
 from app.validation import ValidationError, validate
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 heartbeat = Path("/tmp/icrm-worker-heartbeat")
 LEASE_RENEWAL_SECONDS = 30
+PAGE_FORMAT_EXTENSIONS = PDF_EXTENSIONS | IMAGE_EXTENSIONS
 
 
 def process_one(
@@ -64,10 +66,14 @@ def process_one(
                     } & running_steps.keys()
                     parse_error_code = None
                     if parsing_steps:
-                        if image_engine is None:
-                            raise RuntimeError("image analysis engine is not configured")
                         material.seek(0)
-                        parsed = parse_material(job.document.filename, material, image_engine)
+                        extension = Path(job.document.filename).suffix.lower()
+                        if extension in PAGE_FORMAT_EXTENSIONS:
+                            if image_engine is None:
+                                raise RuntimeError("image analysis engine is not configured")
+                            parsed = parse_material(job.document.filename, material, image_engine)
+                        else:
+                            parsed = parse_structured(job.document.filename, material)
                         store_parsed_output(db, job.document_id, parsed)
                         output_status = JobStatus(parsed.status)
                         if output_status == JobStatus.PARTIAL_SUCCESS:

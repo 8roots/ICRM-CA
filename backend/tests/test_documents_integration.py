@@ -1,8 +1,8 @@
 import io
-import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 
+import docx
 import pytest
 from fastapi.testclient import TestClient
 from testcontainers.minio import MinioContainer
@@ -138,9 +138,9 @@ def test_real_postgres_minio_upload_worker_and_restart(services) -> None:
         )
         assert process_one(app.state.database, objects, "worker-before-restart", NoopEngine())
         package = io.BytesIO()
-        with zipfile.ZipFile(package, "w") as docx:
-            docx.writestr("[Content_Types].xml", "content")
-            docx.writestr("word/document.xml", "content")
+        document = docx.Document()
+        document.add_paragraph("经营情况说明")
+        document.save(package)
         uploaded_docx = client.post(
             f"/api/v1/applications/{application_id}/documents",
             headers={**csrf, "Idempotency-Key": "integration-docx"},
@@ -156,6 +156,13 @@ def test_real_postgres_minio_upload_worker_and_restart(services) -> None:
         assert process_one(app.state.database, objects, "worker-before-restart", NoopEngine())
         status = client.get(f"/api/v1/applications/{application_id}/documents").json()
         assert [document["processing_status"] for document in status] == ["success", "success"]
+        docx_document = next(item for item in status if item["filename"] == "sample.docx")
+        output = client.get(f"/api/v1/documents/{docx_document['id']}/outputs").json()[0]
+        assert output["format"] == "docx"
+        assert output["pages"][0]["number"] is None
+        block = output["pages"][0]["blocks"][0]
+        assert block["text"] == "经营情况说明"
+        assert block["locator"]["paragraph_path"] == "body/1"
         assert (
             client.get(f"/api/v1/applications/{application_id}").json()["lifecycle_state"]
             == "pending_review"

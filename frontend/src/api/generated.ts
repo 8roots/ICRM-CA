@@ -161,6 +161,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Document
+         * @description Stream the original material to its application owner.
+         */
+        get: operations["download_document_api_v1_documents__document_id__download_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/jobs/{job_id}/retry": {
         parameters: {
             query?: never;
@@ -318,13 +338,17 @@ export interface components {
                 number,
                 number,
                 number
-            ];
+            ] | null;
             /** Extraction Method */
             extraction_method: string;
             /** Confidence */
             confidence: number | null;
             /** Cells */
             cells: components["schemas"]["CellResponse"][];
+            /** Locator */
+            locator: {
+                [key: string]: unknown;
+            } | null;
         };
         /** Body_upload_document_api_v1_applications__application_id__documents_post */
         Body_upload_document_api_v1_applications__application_id__documents_post: {
@@ -351,6 +375,10 @@ export interface components {
                 number,
                 number
             ] | null;
+            /** Locator */
+            locator: {
+                [key: string]: unknown;
+            } | null;
         };
         /** CreateUserRequest */
         CreateUserRequest: {
@@ -472,6 +500,8 @@ export interface components {
             id: string;
             /** Document Id */
             document_id: string;
+            /** Format */
+            format: string;
             /** Version */
             version: number;
             /** Status */
@@ -488,11 +518,11 @@ export interface components {
             /** Id */
             id: string;
             /** Number */
-            number: number;
+            number: number | null;
             /** Width */
-            width: number;
+            width: number | null;
             /** Height */
-            height: number;
+            height: number | null;
             /** Status */
             status: string;
             /** Error Code */
@@ -1045,6 +1075,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_document_api_v1_documents__document_id__download_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

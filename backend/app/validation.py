@@ -33,6 +33,28 @@ def chunks(stream, size: int = 1024 * 1024):
         yield chunk
 
 
+def _validate_text_encoding(stream) -> None:
+    """Text materials must decode as UTF-8 or GB18030, never contain NUL bytes.
+
+    GB18030 covers the common Chinese spreadsheet exports that Excel saves
+    without a BOM; the parser records which encoding was actually detected.
+    """
+
+    for encoding in ("utf-8-sig", "gb18030"):
+        stream.seek(0)
+        decoder = codecs.getincrementaldecoder(encoding)()
+        try:
+            for content in chunks(stream):
+                if b"\x00" in content:
+                    raise ValidationError("signature_mismatch")
+                decoder.decode(content)
+            decoder.decode(b"", final=True)
+            return
+        except UnicodeDecodeError:
+            continue
+    raise ValidationError("signature_mismatch") from None
+
+
 def validate(document: Document, stream) -> None:
     extension = Path(document.filename).suffix.lower()
     manual_error = MANUAL_EXTENSIONS.get(extension)
@@ -63,16 +85,7 @@ def validate(document: Document, stream) -> None:
             raise ValidationError("encrypted_input", manual_handling=True)
         validate_package(stream, material_format.package_root)
     elif extension in {".csv", ".md", ".markdown"}:
-        stream.seek(0)
-        decoder = codecs.getincrementaldecoder("utf-8-sig")()
-        try:
-            for content in chunks(stream):
-                decoder.decode(content)
-                if b"\x00" in content:
-                    raise ValidationError("signature_mismatch")
-            decoder.decode(b"", final=True)
-        except UnicodeDecodeError:
-            raise ValidationError("signature_mismatch") from None
+        _validate_text_encoding(stream)
     elif extension == ".png" and not prefix.startswith(b"\x89PNG\r\n\x1a\n"):
         raise ValidationError("signature_mismatch")
     elif extension in {".jpg", ".jpeg"} and not prefix.startswith(b"\xff\xd8\xff"):

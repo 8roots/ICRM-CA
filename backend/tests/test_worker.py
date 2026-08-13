@@ -305,3 +305,79 @@ def test_unexpected_validator_error_is_permanent_not_transient(queued_job, monke
         assert job.status == "failed"
         assert job.error_code == "unexpected_validation_error"
         assert job.attempts == 1
+
+
+def test_worker_parses_structured_xlsx_without_image_engine() -> None:
+    import openpyxl
+
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "流水明细"
+    sheet.append(["日期", "金额"])
+    sheet.append(["2026-08-01", 1234.5])
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    content = buffer.getvalue()
+
+    class XlsxObjects:
+        def open(self, key: str):
+            return io.BytesIO(content)
+
+    app = create_app("sqlite+pysqlite:///:memory:", object_store=XlsxObjects())
+    Base.metadata.create_all(app.state.database.engine)
+    with app.state.database.session() as db:
+        user = User(username="xlsx-owner", password_hash="hash", role="approval_officer")
+        db.add(user)
+        db.flush()
+        application = Application(
+            borrower_type="corporate",
+            borrower_name="流水企业",
+            product="经营贷",
+            application_date=date(2026, 8, 7),
+            owner_id=user.id,
+        )
+        db.add(application)
+        db.flush()
+        document = Document(
+            application_id=application.id,
+            filename="statement.xlsx",
+            extension=".xlsx",
+            declared_mime=(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            ),
+            size_bytes=len(content),
+            sha256="e" * 64,
+            object_key="statement",
+        )
+        db.add(document)
+        db.flush()
+        job = DocumentJob(document_id=document.id)
+        for name in ("validation", "parsing_ocr"):
+            job.steps.append(ProcessingStep(name=name, status="waiting"))
+        job.steps.append(ProcessingStep(name="seal_detection", status="not_applicable"))
+        db.add(job)
+        db.commit()
+
+    assert process_one(app.state.database, XlsxObjects(), "xlsx-worker")
+    with app.state.database.session() as db:
+        output = db.query(DocumentOutput).one()
+        assert (output.version, output.status) == (1, "success")
+        assert output.model_version == "none"
+        page = output.pages[0]
+        assert page.number is None
+        assert page.width is None
+        block = page.blocks[0]
+        assert block.kind == "table"
+        assert block.extraction_method == "xlsx_text"
+        assert block.locator["sheet"] == "流水明细"
+        assert block.locator["cell_range"] == "A1:B2"
+        assert block.cells[0].locator["cell"] == "A1"
+        assert block.cells[3].text == "1234.5"
+        steps = {step.name: step.status for step in output.document.jobs[0].steps}
+        assert steps == {
+            "validation": "success",
+            "parsing_ocr": "success",
+            "seal_detection": "not_applicable",
+        }
+        assert output.document.processing_status == "success"
+        assert output.document.review_status == "pending_review"

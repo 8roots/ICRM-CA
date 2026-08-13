@@ -17,11 +17,37 @@ CHUNK_SIZE = 1024 * 1024
 
 
 @dataclass(frozen=True)
+class Locator:
+    """Format-native source reference for a parsed block or table cell.
+
+    Exactly the fields for one format are populated: DOCX uses
+    ``paragraph_path``, XLSX uses ``sheet`` plus ``cell_range``/``cell``, CSV
+    uses ``row``/``column``/``column_name``, Markdown uses ``heading_path``
+    and ``line_start``/``line_end``. PDF/image blocks carry no locator: their
+    page and bounding box are already native.
+    """
+
+    kind: str  # "docx" | "xlsx" | "csv" | "markdown"
+    paragraph_path: str | None = None
+    sheet: str | None = None
+    cell_range: str | None = None
+    cell: str | None = None
+    row: int | None = None
+    column: int | None = None
+    column_name: str | None = None
+    encoding: str | None = None
+    heading_path: str | None = None
+    line_start: int | None = None
+    line_end: int | None = None
+
+
+@dataclass(frozen=True)
 class CellResult:
     row: int
     column: int
     text: str
     bbox: tuple[float, float, float, float] | None = None
+    locator: Locator | None = None
 
 
 @dataclass(frozen=True)
@@ -29,10 +55,11 @@ class BlockResult:
     order: int
     kind: str
     text: str
-    bbox: tuple[float, float, float, float]
+    bbox: tuple[float, float, float, float] | None
     extraction_method: str
     confidence: float | None = None
     cells: tuple[CellResult, ...] = ()
+    locator: Locator | None = None
 
 
 @dataclass(frozen=True)
@@ -56,9 +83,9 @@ class ImageAnalysisEngine(Protocol):
 
 @dataclass(frozen=True)
 class PageResult:
-    number: int
-    width: float
-    height: float
+    number: int | None
+    width: float | None
+    height: float | None
     status: str
     blocks: tuple[BlockResult, ...] = ()
     seals: tuple[SealResult, ...] = ()
@@ -110,7 +137,13 @@ def scale_analysis(analysis: Analysis, scale_x: float, scale_y: float) -> Analys
         cell_results: tuple[CellResult, ...],
     ) -> tuple[CellResult, ...]:
         return tuple(
-            CellResult(cell.row, cell.column, cell.text, bbox(cell.bbox) if cell.bbox else None)
+            CellResult(
+                cell.row,
+                cell.column,
+                cell.text,
+                bbox(cell.bbox) if cell.bbox else None,
+                cell.locator,
+            )
             for cell in cell_results
         )
 
@@ -124,6 +157,7 @@ def scale_analysis(analysis: Analysis, scale_x: float, scale_y: float) -> Analys
                 block.extraction_method,
                 block.confidence,
                 cells(block.cells),
+                block.locator,
             )
             for block in analysis.blocks
         ),

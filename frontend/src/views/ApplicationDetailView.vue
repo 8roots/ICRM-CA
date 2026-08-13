@@ -17,10 +17,14 @@ const labels: Record<string, string> = {
   manual_handling: '需人工处理',
 }
 const errorLabels: Record<string, string> = {
-  signature_mismatch: '材料签名与格式不匹配', mime_mismatch: 'MIME 与格式不匹配',
-  unsupported_legacy_office: '不支持旧版 Office 材料', unsupported_macro: '不支持宏材料',
-  unsupported_archive: '不支持压缩材料', unsupported_format: '不支持此格式',
-  encrypted_input: '材料已加密', object_store_unavailable: '对象存储暂时不可用',
+  signature_mismatch: '材料签名与格式不匹配，请确认文件未损坏',
+  mime_mismatch: 'MIME 与格式不匹配',
+  unsupported_legacy_office: '不支持旧版 Office 材料，请转换为 DOCX/XLSX 后重新上传',
+  unsupported_macro: '不支持含宏的材料，请另存为无宏的 DOCX/XLSX 后重新上传',
+  unsupported_archive: '不支持压缩包材料，请解压后直接上传文件',
+  unsupported_format: '不支持此格式',
+  encrypted_input: '材料已加密，请解除密码保护后重新上传',
+  object_store_unavailable: '对象存储暂时不可用',
 }
 
 function latestJob(document: Document): DocumentJob | undefined {
@@ -130,6 +134,12 @@ onUnmounted(() => window.clearInterval(timer))
             :to="`/documents/${scope.row.id}/evidence`"
             :aria-label="`证据预览-${scope.row.filename}`"
           >证据预览</router-link>
+          <a
+            class="download-link"
+            :href="`/api/v1/documents/${scope.row.id}/download`"
+            download
+            :aria-label="`下载原件-${scope.row.filename}`"
+          >下载原件</a>
           <template v-if="['failed', 'manual_handling'].includes(scope.row.processing_status)">
             <el-input v-model="retryReasons[scope.row.id]" :aria-label="`重试原因-${scope.row.filename}`" placeholder="填写重试原因" />
             <el-button
@@ -147,4 +157,5 @@ onUnmounted(() => window.clearInterval(timer))
 <style scoped>
 .upload-button { display: inline-block; margin-bottom: 16px; cursor: pointer; color: #1769aa; }
 .upload-button input { display: block; margin-top: 8px; }
+.download-link { margin-left: 8px; color: #1769aa; }
 </style>
