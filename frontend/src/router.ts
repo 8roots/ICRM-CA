@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AdminUsersView from './views/AdminUsersView.vue'
 import ApplicationDetailView from './views/ApplicationDetailView.vue'
 import ApplicationsView from './views/ApplicationsView.vue'
+import DocumentEvidenceView from './views/DocumentEvidenceView.vue'
 import LoginView from './views/LoginView.vue'
 
 export const router = createRouter({
@@ -11,6 +12,7 @@ export const router = createRouter({
     { path: '/login', component: LoginView },
     { path: '/applications', component: ApplicationsView },
     { path: '/applications/:id', component: ApplicationDetailView },
+    { path: '/documents/:id/evidence', component: DocumentEvidenceView },
     { path: '/admin/users', component: AdminUsersView },
   ],
 })

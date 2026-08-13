@@ -124,9 +124,9 @@ def test_upload_returns_document_and_waiting_job_and_deduplicates() -> None:
         assert same_bytes_changed_metadata.status_code == 409
         assert [step["status"] for step in duplicate.json()["job"]["steps"]] == [
             "waiting",
+            "waiting",
             "not_applicable",
-            "not_applicable",
-            "not_applicable",
+            "waiting",
             "not_applicable",
             "not_applicable",
         ]
@@ -271,6 +271,263 @@ def test_retry_requires_reason_and_owner() -> None:
             json=retry_payload,
         )
         assert unauthorized_retry.status_code == 404
+
+
+def test_owner_reads_versioned_output_and_reruns_selected_parser_steps() -> None:
+    import pymupdf
+
+    from app.parsing import Analysis
+    from app.worker import process_one
+
+    pdf = pymupdf.open()
+    page = pdf.new_page(width=300, height=200)
+    page.insert_text((30, 50), "Version one remains reviewable")
+    content = pdf.tobytes()
+
+    class Engine:
+        version = "test-model-1"
+
+        def analyze(self, image: bytes, *, run_ocr: bool) -> Analysis:
+            assert not run_ocr
+            return Analysis()
+
+    client, application_id = setup()
+    with client:
+        csrf = login(client, "owner")
+        uploaded = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "parsed-pdf"},
+            files={"file": ("parsed.pdf", content, "application/pdf")},
+        )
+        assert process_one(
+            client.app.state.database, client.app.state.object_store, "parser", Engine()
+        )
+        document_id = uploaded.json()["document"]["id"]
+        outputs = client.get(f"/api/v1/documents/{document_id}/outputs")
+        assert outputs.status_code == 200
+        assert outputs.json()[0]["version"] == 1
+        assert outputs.json()[0]["pages"][0]["blocks"][0]["text"] == (
+            "Version one remains reviewable"
+        )
+        preview = client.get(f"/api/v1/documents/{document_id}/pages/1/image")
+        assert preview.status_code == 200
+        assert preview.headers["content-type"] == "image/png"
+        from PIL import Image
+
+        assert Image.open(io.BytesIO(preview.content)).size == (600, 400)
+
+        job_id = uploaded.json()["job"]["id"]
+        rerun = client.post(
+            f"/api/v1/jobs/{job_id}/retry",
+            headers={**csrf, "Idempotency-Key": "parser-rerun"},
+            json={
+                "reason": "使用固定的新模型重新解析",
+                "selected_steps": ["parsing_ocr", "seal_detection"],
+            },
+        )
+        assert rerun.status_code == 200
+        assert process_one(
+            client.app.state.database, client.app.state.object_store, "parser", Engine()
+        )
+        versions = client.get(f"/api/v1/documents/{document_id}/outputs").json()
+        assert [output["version"] for output in versions] == [1, 2]
+        assert versions[0]["pages"][0]["blocks"][0]["text"] == (
+            "Version one remains reviewable"
+        )
+
+
+def test_owner_confirms_seal_candidate_and_records_signature_presence_manually() -> None:
+    from PIL import Image
+
+    from app.parsing import Analysis, BlockResult, SealResult
+    from app.worker import process_one
+
+    image = io.BytesIO()
+    Image.new("RGB", (120, 80), "white").save(image, format="PNG")
+
+    class Engine:
+        version = "seal-model-1"
+
+        def analyze(self, content: bytes, *, run_ocr: bool) -> Analysis:
+            assert run_ocr
+            return Analysis(
+                blocks=(BlockResult(0, "paragraph", "公开样例", (10, 10, 60, 30), "ocr", 0.9),),
+                seals=(SealResult("印章文字候选", (60, 30, 110, 75), 0.8),),
+            )
+
+    client, application_id = setup()
+    with client:
+        csrf = login(client, "owner")
+        uploaded = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "seal-image"},
+            files={"file": ("seal.png", image.getvalue(), "image/png")},
+        )
+        assert process_one(
+            client.app.state.database, client.app.state.object_store, "parser", Engine()
+        )
+        document_id = uploaded.json()["document"]["id"]
+        output = client.get(f"/api/v1/documents/{document_id}/outputs").json()[0]
+        seal = output["pages"][0]["seals"][0]
+        seal_review = client.post(
+            f"/api/v1/document-outputs/{output['id']}/reviews",
+            headers={**csrf, "Idempotency-Key": "confirm-seal"},
+            json={
+                "kind": "seal_presence",
+                "status": "present",
+                "seal_candidate_id": seal["id"],
+                "reason": "审批人员查看原页后确认存在印章区域",
+            },
+        )
+        assert seal_review.status_code == 201
+        assert seal_review.json()["kind"] == "seal_presence"
+        signature_review = client.post(
+            f"/api/v1/document-outputs/{output['id']}/reviews",
+            headers={**csrf, "Idempotency-Key": "confirm-signature"},
+            json={
+                "kind": "signature_presence",
+                "status": "present",
+                "seal_candidate_id": None,
+                "reason": "审批人员人工查看原页后确认存在签字",
+            },
+        )
+        assert signature_review.status_code == 201
+        reviews = client.get(f"/api/v1/document-outputs/{output['id']}/reviews").json()
+        assert [review["kind"] for review in reviews] == [
+            "seal_presence",
+            "signature_presence",
+        ]
+        assert all("authentic" not in str(review).lower() for review in reviews)
+
+
+def test_output_preview_and_review_resources_respect_ownership_and_ordering() -> None:
+    import pymupdf
+
+    from app.parsing import Analysis
+    from app.worker import process_one
+
+    pdf = pymupdf.open()
+    page = pdf.new_page(width=300, height=200)
+    page.insert_text((30, 50), "Owned synthetic statement")
+    content = pdf.tobytes()
+
+    class Engine:
+        version = "test-model-1"
+
+        def analyze(self, image: bytes, *, run_ocr: bool) -> Analysis:
+            assert not run_ocr
+            return Analysis()
+
+    client, application_id = setup()
+    with client:
+        csrf = login(client, "owner")
+        uploaded = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "ownership-pdf"},
+            files={"file": ("owned.pdf", content, "application/pdf")},
+        )
+        assert process_one(
+            client.app.state.database, client.app.state.object_store, "parser", Engine()
+        )
+        document_id = uploaded.json()["document"]["id"]
+        output = client.get(f"/api/v1/documents/{document_id}/outputs").json()[0]
+
+    client.cookies.clear()
+    with client:
+        other_csrf = login(client, "other")
+        assert (
+            client.get(f"/api/v1/documents/{document_id}/outputs").status_code == 404
+        )
+        assert (
+            client.get(f"/api/v1/documents/{document_id}/pages/1/image").status_code == 404
+        )
+        assert (
+            client.get(f"/api/v1/document-outputs/{output['id']}/reviews").status_code == 404
+        )
+        assert (
+            client.post(
+                f"/api/v1/document-outputs/{output['id']}/reviews",
+                headers={**other_csrf, "Idempotency-Key": "other-review"},
+                json={
+                    "kind": "signature_presence",
+                    "status": "present",
+                    "seal_candidate_id": None,
+                    "reason": "无权访问",
+                },
+            ).status_code
+            == 404
+        )
+
+
+def test_review_replay_is_idempotent_and_ordered_by_creation() -> None:
+    from PIL import Image
+
+    from app.parsing import Analysis, BlockResult, SealResult
+    from app.worker import process_one
+
+    image = io.BytesIO()
+    Image.new("RGB", (120, 80), "white").save(image, format="PNG")
+
+    class Engine:
+        version = "seal-model-1"
+
+        def analyze(self, content: bytes, *, run_ocr: bool) -> Analysis:
+            assert run_ocr
+            return Analysis(
+                blocks=(BlockResult(0, "paragraph", "公开样例", (10, 10, 60, 30), "ocr", 0.9),),
+                seals=(SealResult("印章文字候选", (60, 30, 110, 75), 0.8),),
+            )
+
+    client, application_id = setup()
+    with client:
+        csrf = login(client, "owner")
+        uploaded = client.post(
+            f"/api/v1/applications/{application_id}/documents",
+            headers={**csrf, "Idempotency-Key": "review-idem-image"},
+            files={"file": ("seal.png", image.getvalue(), "image/png")},
+        )
+        assert process_one(
+            client.app.state.database, client.app.state.object_store, "parser", Engine()
+        )
+        document_id = uploaded.json()["document"]["id"]
+        output = client.get(f"/api/v1/documents/{document_id}/outputs").json()[0]
+        payload = {
+            "kind": "signature_presence",
+            "status": "present",
+            "seal_candidate_id": None,
+            "reason": "人工查看原页后确认签字存在",
+        }
+        review_headers = {**csrf, "Idempotency-Key": "sig-review"}
+        created = client.post(
+            f"/api/v1/document-outputs/{output['id']}/reviews",
+            headers=review_headers,
+            json=payload,
+        )
+        assert created.status_code == 201
+        replay = client.post(
+            f"/api/v1/document-outputs/{output['id']}/reviews",
+            headers=review_headers,
+            json=payload,
+        )
+        assert replay.status_code == 201
+        assert replay.json()["id"] == created.json()["id"]
+        mismatch = client.post(
+            f"/api/v1/document-outputs/{output['id']}/reviews",
+            headers=review_headers,
+            json={**payload, "status": "absent"},
+        )
+        assert mismatch.status_code == 409
+        first = client.post(
+            f"/api/v1/document-outputs/{output['id']}/reviews",
+            headers={**csrf, "Idempotency-Key": "sig-review-first"},
+            json=payload,
+        )
+        assert first.status_code == 201
+        reviews = client.get(f"/api/v1/document-outputs/{output['id']}/reviews").json()
+        assert [review["id"] for review in reviews] == [
+            created.json()["id"],
+            first.json()["id"],
+        ]
 
 
 def test_retrying_unchanged_unsupported_material_keeps_manual_outcome() -> None:

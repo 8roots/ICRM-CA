@@ -25,6 +25,7 @@ from app.models import (
 router = APIRouter(tags=["documents"])
 
 PROCESSING_STEPS = tuple(ProcessingStepName)
+PARSE_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tif", ".tiff"}
 
 
 @dataclass
@@ -177,12 +178,18 @@ def enforce_application_capacity(
 
 def document_job(document: Document, job_status: JobStatus, error_code: str | None) -> DocumentJob:
     job = DocumentJob(document=document, status=job_status, error_code=error_code)
+    parse_steps = {ProcessingStepName.PARSING_OCR, ProcessingStepName.SEAL_DETECTION}
     for step_name in PROCESSING_STEPS:
         is_validation = step_name == ProcessingStepName.VALIDATION
+        should_run = is_validation or (
+            job_status == JobStatus.WAITING
+            and document.extension in PARSE_EXTENSIONS
+            and step_name in parse_steps
+        )
         job.steps.append(
             ProcessingStep(
                 name=step_name,
-                status=job_status if is_validation else JobStatus.NOT_APPLICABLE,
+                status=job_status if should_run else JobStatus.NOT_APPLICABLE,
                 error_code=error_code if is_validation else None,
             )
         )
@@ -412,16 +419,26 @@ def retry_job(
     )
     if replay_id:
         return as_job(job)
-    if job.status not in {JobStatus.FAILED, JobStatus.MANUAL_HANDLING}:
-        raise HTTPException(status.HTTP_409_CONFLICT, "Only failed jobs can be retried")
     selected = {step.value for step in payload.selected_steps}
     failed_steps = {
         step.name
         for step in job.steps
         if step.status in {JobStatus.FAILED, JobStatus.MANUAL_HANDLING}
     }
-    if not selected <= failed_steps:
-        raise HTTPException(status.HTTP_409_CONFLICT, "Only failed steps can be retried")
+    rerunnable_steps = {
+        step.name
+        for step in job.steps
+        if step.name in {ProcessingStepName.PARSING_OCR, ProcessingStepName.SEAL_DETECTION}
+        and step.status != JobStatus.NOT_APPLICABLE
+    }
+    if job.status in {JobStatus.SUCCESS, JobStatus.PARTIAL_SUCCESS}:
+        allowed_steps = rerunnable_steps
+    elif job.status in {JobStatus.FAILED, JobStatus.MANUAL_HANDLING}:
+        allowed_steps = failed_steps
+    else:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Job cannot be rerun while active")
+    if not selected <= allowed_steps:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Selected steps cannot be rerun")
     job.status = JobStatus.WAITING
     job.error_code = None
     job.retry_reason = payload.reason

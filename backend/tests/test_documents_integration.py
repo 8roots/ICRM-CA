@@ -10,8 +10,17 @@ from testcontainers.postgres import PostgresContainer
 
 from app.document_jobs import claim_next_job, finish_job, recover_stale_jobs, renew_claim
 from app.main import create_app
-from app.models import Application, Base, Document, DocumentJob, ProcessingStep, User
+from app.models import (
+    Application,
+    Base,
+    Document,
+    DocumentJob,
+    DocumentOutput,
+    ProcessingStep,
+    User,
+)
 from app.object_store import MinioObjects
+from app.parsing import Analysis
 from app.security import hash_password
 from app.worker import process_one
 
@@ -54,12 +63,36 @@ def login(client: TestClient, username: str) -> dict[str, str]:
     return {"X-CSRF-Token": client.cookies["icrm_csrf"]}
 
 
-def upload(client: TestClient, application_id: str, csrf: dict[str, str], key: str, content: bytes):
+def upload(
+    client: TestClient,
+    application_id: str,
+    csrf: dict[str, str],
+    key: str,
+    content: bytes,
+    filename: str = "sample.pdf",
+    mime: str = "application/pdf",
+):
     return client.post(
         f"/api/v1/applications/{application_id}/documents",
         headers={**csrf, "Idempotency-Key": key},
-        files={"file": ("sample.pdf", io.BytesIO(content), "application/pdf")},
+        files={"file": (filename, io.BytesIO(content), mime)},
     )
+
+
+def parseable_pdf(text: str = "public synthetic statement") -> bytes:
+    import pymupdf
+
+    pdf = pymupdf.open()
+    page = pdf.new_page(width=300, height=200)
+    page.insert_text((30, 50), text)
+    return pdf.tobytes()
+
+
+class NoopEngine:
+    version = "integration-model-1"
+
+    def analyze(self, image: bytes, *, run_ocr: bool) -> Analysis:
+        return Analysis()
 
 
 def create_application(app, borrower_name: str) -> str:
@@ -95,13 +128,15 @@ def test_real_postgres_minio_upload_worker_and_restart(services) -> None:
 
     with TestClient(app, base_url="https://testserver") as client:
         csrf = login(client, "integration-owner")
-        uploaded = upload(client, application_id, csrf, "integration-pdf", b"%PDF-1.7\npublic")
+        uploaded = upload(
+            client, application_id, csrf, "integration-pdf", parseable_pdf()
+        )
         assert uploaded.status_code == 202
         assert (
             client.get(f"/api/v1/applications/{application_id}").json()["lifecycle_state"]
             == "processing"
         )
-        assert process_one(app.state.database, objects, "worker-before-restart")
+        assert process_one(app.state.database, objects, "worker-before-restart", NoopEngine())
         package = io.BytesIO()
         with zipfile.ZipFile(package, "w") as docx:
             docx.writestr("[Content_Types].xml", "content")
@@ -118,14 +153,51 @@ def test_real_postgres_minio_upload_worker_and_restart(services) -> None:
             },
         )
         assert uploaded_docx.status_code == 202
-        assert process_one(app.state.database, objects, "worker-before-restart")
+        assert process_one(app.state.database, objects, "worker-before-restart", NoopEngine())
         status = client.get(f"/api/v1/applications/{application_id}/documents").json()
         assert [document["processing_status"] for document in status] == ["success", "success"]
         assert (
             client.get(f"/api/v1/applications/{application_id}").json()["lifecycle_state"]
             == "pending_review"
         )
-        assert not process_one(app.state.database, objects, "worker-after-restart")
+        assert not process_one(app.state.database, objects, "worker-after-restart", NoopEngine())
+
+
+def test_rerun_appends_versioned_parsing_output_against_real_postgres(services) -> None:
+    database_url, objects = services
+    app = create_app(database_url, cookie_secure=True, object_store=objects)
+    application_id = create_application(app, "版本追加企业")
+
+    with TestClient(app, base_url="https://testserver") as client:
+        csrf = login(client, "integration-owner")
+        uploaded = upload(
+            client, application_id, csrf, "versioned-pdf", parseable_pdf("version one text")
+        )
+        assert uploaded.status_code == 202
+        assert process_one(app.state.database, objects, "version-worker", NoopEngine())
+        document_id = uploaded.json()["document"]["id"]
+        job_id = uploaded.json()["job"]["id"]
+        first = client.get(f"/api/v1/documents/{document_id}/outputs").json()
+        assert [output["version"] for output in first] == [1]
+        assert first[0]["pages"][0]["blocks"][0]["text"] == "version one text"
+        assert first[0]["model_version"] == "integration-model-1"
+
+        rerun = client.post(
+            f"/api/v1/jobs/{job_id}/retry",
+            headers={**csrf, "Idempotency-Key": "integration-rerun"},
+            json={
+                "reason": "更换解析模型后重新解析",
+                "selected_steps": ["parsing_ocr", "seal_detection"],
+            },
+        )
+        assert rerun.status_code == 200
+        assert process_one(app.state.database, objects, "version-worker", NoopEngine())
+        versions = client.get(f"/api/v1/documents/{document_id}/outputs").json()
+        assert [output["version"] for output in versions] == [1, 2]
+        assert versions[0]["pages"][0]["blocks"][0]["text"] == "version one text"
+        assert versions[1]["version"] == 2
+        with app.state.database.session() as db:
+            assert db.query(DocumentOutput).filter_by(document_id=document_id).count() == 2
 
 
 def test_concurrent_uploads_respect_application_count_limit(services) -> None:

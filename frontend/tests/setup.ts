@@ -8,3 +8,6 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
   })),
 })
+
+URL.createObjectURL = vi.fn(() => 'blob:test-preview')
+URL.revokeObjectURL = vi.fn()

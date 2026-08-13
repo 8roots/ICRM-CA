@@ -6,6 +6,12 @@ export type ApplicationInput = components['schemas']['ApplicationFields']
 export type ManagedUser = components['schemas']['ManagedUserResponse']
 export type Document = components['schemas']['DocumentResponse']
 export type DocumentJob = components['schemas']['JobResponse']
+export type OutputResponse = components['schemas']['OutputResponse']
+export type PageResponse = components['schemas']['PageResponse']
+export type BlockResponse = components['schemas']['BlockResponse']
+export type SealCandidateResponse = components['schemas']['SealCandidateResponse']
+export type EvidenceReviewResponse = components['schemas']['EvidenceReviewResponse']
+export type EvidenceReviewInput = components['schemas']['EvidenceReviewRequest']
 
 function csrfToken(): string {
   const cookie = document.cookie

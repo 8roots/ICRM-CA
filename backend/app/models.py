@@ -113,6 +113,9 @@ class Document(Base):
     jobs: Mapped[list["DocumentJob"]] = relationship(
         back_populates="document", cascade="all, delete-orphan"
     )
+    outputs: Mapped[list["DocumentOutput"]] = relationship(
+        back_populates="document", cascade="all, delete-orphan"
+    )
 
 
 class DocumentJob(Base):
@@ -155,6 +158,130 @@ class ProcessingStep(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     job: Mapped[DocumentJob] = relationship(back_populates="steps")
+
+
+class DocumentOutput(Base):
+    __tablename__ = "document_outputs"
+    __table_args__ = (UniqueConstraint("document_id", "version"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    document_id: Mapped[str] = mapped_column(
+        ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    version: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(30))
+    parser_version: Mapped[str] = mapped_column(String(100))
+    model_version: Mapped[str] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    document: Mapped[Document] = relationship(back_populates="outputs")
+    pages: Mapped[list["DocumentPage"]] = relationship(
+        back_populates="output", cascade="all, delete-orphan", order_by="DocumentPage.number"
+    )
+    reviews: Mapped[list["EvidenceReview"]] = relationship(
+        back_populates="output", cascade="all, delete-orphan", order_by="EvidenceReview.created_at"
+    )
+
+
+class DocumentPage(Base):
+    __tablename__ = "document_pages"
+    __table_args__ = (UniqueConstraint("output_id", "number"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    output_id: Mapped[str] = mapped_column(
+        ForeignKey("document_outputs.id", ondelete="CASCADE"), index=True
+    )
+    number: Mapped[int] = mapped_column(Integer)
+    width: Mapped[float] = mapped_column()
+    height: Mapped[float] = mapped_column()
+    status: Mapped[str] = mapped_column(String(30))
+    error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    output: Mapped[DocumentOutput] = relationship(back_populates="pages")
+    blocks: Mapped[list["DocumentBlock"]] = relationship(
+        back_populates="page", cascade="all, delete-orphan", order_by="DocumentBlock.order"
+    )
+    seals: Mapped[list["SealCandidate"]] = relationship(
+        back_populates="page", cascade="all, delete-orphan"
+    )
+
+
+class DocumentBlock(Base):
+    __tablename__ = "document_blocks"
+    __table_args__ = (UniqueConstraint("page_id", "order"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    page_id: Mapped[str] = mapped_column(
+        ForeignKey("document_pages.id", ondelete="CASCADE"), index=True
+    )
+    order: Mapped[int] = mapped_column(Integer)
+    kind: Mapped[str] = mapped_column(String(30))
+    text: Mapped[str] = mapped_column(Text)
+    x0: Mapped[float] = mapped_column()
+    y0: Mapped[float] = mapped_column()
+    x1: Mapped[float] = mapped_column()
+    y1: Mapped[float] = mapped_column()
+    extraction_method: Mapped[str] = mapped_column(String(30))
+    confidence: Mapped[float | None] = mapped_column(nullable=True)
+    page: Mapped[DocumentPage] = relationship(back_populates="blocks")
+    cells: Mapped[list["TableCell"]] = relationship(
+        back_populates="block", cascade="all, delete-orphan"
+    )
+
+
+class TableCell(Base):
+    __tablename__ = "table_cells"
+    __table_args__ = (UniqueConstraint("block_id", "row_index", "column_index"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    block_id: Mapped[str] = mapped_column(
+        ForeignKey("document_blocks.id", ondelete="CASCADE"), index=True
+    )
+    row_index: Mapped[int] = mapped_column(Integer)
+    column_index: Mapped[int] = mapped_column(Integer)
+    text: Mapped[str] = mapped_column(Text)
+    x0: Mapped[float | None] = mapped_column(nullable=True)
+    y0: Mapped[float | None] = mapped_column(nullable=True)
+    x1: Mapped[float | None] = mapped_column(nullable=True)
+    y1: Mapped[float | None] = mapped_column(nullable=True)
+    block: Mapped[DocumentBlock] = relationship(back_populates="cells")
+
+
+class SealCandidate(Base):
+    __tablename__ = "seal_candidates"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    page_id: Mapped[str] = mapped_column(
+        ForeignKey("document_pages.id", ondelete="CASCADE"), index=True
+    )
+    text: Mapped[str] = mapped_column(Text)
+    x0: Mapped[float] = mapped_column()
+    y0: Mapped[float] = mapped_column()
+    x1: Mapped[float] = mapped_column()
+    y1: Mapped[float] = mapped_column()
+    confidence: Mapped[float] = mapped_column()
+    model_version: Mapped[str] = mapped_column(String(100))
+    page: Mapped[DocumentPage] = relationship(back_populates="seals")
+
+
+class EvidenceReview(Base):
+    __tablename__ = "evidence_reviews"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    output_id: Mapped[str] = mapped_column(
+        ForeignKey("document_outputs.id", ondelete="CASCADE"), index=True
+    )
+    seal_candidate_id: Mapped[str | None] = mapped_column(
+        ForeignKey("seal_candidates.id", ondelete="CASCADE"), nullable=True
+    )
+    kind: Mapped[str] = mapped_column(String(30))
+    status: Mapped[str] = mapped_column(String(30))
+    reason: Mapped[str] = mapped_column(Text)
+    actor_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    output: Mapped[DocumentOutput] = relationship(back_populates="reviews")
 
 
 class IdempotencyRecord(Base):

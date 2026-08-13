@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     minio_access_key: str = "icrm-local"
     minio_secret_key: str = "local-minio-password"
     minio_bucket: str = "materials"
+    models_dir: str = "/app/models"
     max_material_bytes: int = 200 * 1024 * 1024
     max_application_bytes: int = 2 * 1024 * 1024 * 1024
     max_application_materials: int = 100

@@ -125,6 +125,11 @@ onUnmounted(() => window.clearInterval(timer))
       </el-table-column>
       <el-table-column label="操作">
         <template #default="scope">
+          <router-link
+            v-if="['success', 'partial_success', 'failed'].includes(scope.row.processing_status)"
+            :to="`/documents/${scope.row.id}/evidence`"
+            :aria-label="`证据预览-${scope.row.filename}`"
+          >证据预览</router-link>
           <template v-if="['failed', 'manual_handling'].includes(scope.row.processing_status)">
             <el-input v-model="retryReasons[scope.row.id]" :aria-label="`重试原因-${scope.row.filename}`" placeholder="填写重试原因" />
             <el-button

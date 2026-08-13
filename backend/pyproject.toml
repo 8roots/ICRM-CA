@@ -13,6 +13,10 @@ dependencies = [
   "uvicorn[standard]==0.34.0",
   "minio==7.2.15",
   "python-multipart==0.0.20",
+  "pymupdf==1.28.2",
+  "pillow==12.3.0",
+  "paddleocr==3.7.0",
+  "paddlepaddle==3.3.1",
 ]
 
 [dependency-groups]

@@ -10,7 +10,6 @@ from app.models import (
     Document,
     DocumentJob,
     JobStatus,
-    ProcessingStepName,
     ReviewStatus,
 )
 
@@ -36,7 +35,7 @@ def claim_next_job(db: Session, worker_id: str) -> DocumentJob | None:
     job.attempts += 1
     job.document.processing_status = JobStatus.RUNNING
     for step in job.steps:
-        if step.name == ProcessingStepName.VALIDATION and step.status != JobStatus.SUCCESS:
+        if step.status == JobStatus.WAITING:
             step.status = JobStatus.RUNNING
             step.started_at = utcnow()
             step.error_code = None
@@ -115,7 +114,7 @@ def finish_job(
     job.document.processing_status = job.status
     job.document.review_status = (
         ReviewStatus.PENDING_REVIEW
-        if outcome in {JobStatus.SUCCESS, JobStatus.MANUAL_HANDLING}
+        if outcome in {JobStatus.SUCCESS, JobStatus.PARTIAL_SUCCESS, JobStatus.MANUAL_HANDLING}
         else ReviewStatus.NOT_READY
     )
     db.flush()

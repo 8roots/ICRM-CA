@@ -178,6 +178,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/outputs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Outputs */
+        get: operations["list_outputs_api_v1_documents__document_id__outputs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/document-outputs/{output_id}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Reviews */
+        get: operations["list_reviews_api_v1_document_outputs__output_id__reviews_get"];
+        put?: never;
+        /** Create Review */
+        post: operations["create_review_api_v1_document_outputs__output_id__reviews_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/pages/{page_number}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Page Image */
+        get: operations["page_image_api_v1_documents__document_id__pages__page_number__image_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/live": {
         parameters: {
             query?: never;
@@ -250,6 +302,30 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** BlockResponse */
+        BlockResponse: {
+            /** Id */
+            id: string;
+            /** Order */
+            order: number;
+            /** Kind */
+            kind: string;
+            /** Text */
+            text: string;
+            /** Bbox */
+            bbox: [
+                number,
+                number,
+                number,
+                number
+            ];
+            /** Extraction Method */
+            extraction_method: string;
+            /** Confidence */
+            confidence: number | null;
+            /** Cells */
+            cells: components["schemas"]["CellResponse"][];
+        };
         /** Body_upload_document_api_v1_applications__application_id__documents_post */
         Body_upload_document_api_v1_applications__application_id__documents_post: {
             /**
@@ -257,6 +333,24 @@ export interface components {
              * Format: binary
              */
             file: string;
+        };
+        /** CellResponse */
+        CellResponse: {
+            /** Id */
+            id: string;
+            /** Row */
+            row: number;
+            /** Column */
+            column: number;
+            /** Text */
+            text: string;
+            /** Bbox */
+            bbox: [
+                number,
+                number,
+                number,
+                number
+            ] | null;
         };
         /** CreateUserRequest */
         CreateUserRequest: {
@@ -290,6 +384,45 @@ export interface components {
             review_status: string;
             /** Jobs */
             jobs: components["schemas"]["JobResponse"][];
+        };
+        /** EvidenceReviewRequest */
+        EvidenceReviewRequest: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "seal_presence" | "signature_presence";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "present" | "absent" | "uncertain";
+            /** Seal Candidate Id */
+            seal_candidate_id?: string | null;
+            /** Reason */
+            reason: string;
+        };
+        /** EvidenceReviewResponse */
+        EvidenceReviewResponse: {
+            /** Id */
+            id: string;
+            /** Output Id */
+            output_id: string;
+            /** Seal Candidate Id */
+            seal_candidate_id: string | null;
+            /** Kind */
+            kind: string;
+            /** Status */
+            status: string;
+            /** Reason */
+            reason: string;
+            /** Actor Id */
+            actor_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -333,6 +466,42 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** OutputResponse */
+        OutputResponse: {
+            /** Id */
+            id: string;
+            /** Document Id */
+            document_id: string;
+            /** Version */
+            version: number;
+            /** Status */
+            status: string;
+            /** Parser Version */
+            parser_version: string;
+            /** Model Version */
+            model_version: string;
+            /** Pages */
+            pages: components["schemas"]["PageResponse"][];
+        };
+        /** PageResponse */
+        PageResponse: {
+            /** Id */
+            id: string;
+            /** Number */
+            number: number;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Status */
+            status: string;
+            /** Error Code */
+            error_code: string | null;
+            /** Blocks */
+            blocks: components["schemas"]["BlockResponse"][];
+            /** Seals */
+            seals: components["schemas"]["SealCandidateResponse"][];
+        };
         /** PrimaryBorrower */
         PrimaryBorrower: {
             /**
@@ -354,6 +523,24 @@ export interface components {
             reason: string;
             /** Selected Steps */
             selected_steps: components["schemas"]["ProcessingStepName"][];
+        };
+        /** SealCandidateResponse */
+        SealCandidateResponse: {
+            /** Id */
+            id: string;
+            /** Text */
+            text: string;
+            /** Bbox */
+            bbox: [
+                number,
+                number,
+                number,
+                number
+            ];
+            /** Confidence */
+            confidence: number;
+            /** Model Version */
+            model_version: string;
         };
         /** StepResponse */
         StepResponse: {
@@ -899,6 +1086,147 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_outputs_api_v1_documents__document_id__outputs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutputResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_reviews_api_v1_document_outputs__output_id__reviews_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                output_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceReviewResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_review_api_v1_document_outputs__output_id__reviews_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                output_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvidenceReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceReviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    page_image_api_v1_documents__document_id__pages__page_number__image_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+                page_number: number;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
