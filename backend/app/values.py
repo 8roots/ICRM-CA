@@ -17,9 +17,7 @@ from app.fields import FieldDef, ValueType
 
 AMOUNT_RE = re.compile(r"([0-9][0-9,]*(?:\.[0-9]+)?)\s*(亿元|万元|千元|元|亿|万)?")
 PERCENT_RE = re.compile(r"([0-9]+(?:\.[0-9]+)?)\s*%")
-DATE_RE = re.compile(
-    r"(20\d{2}|19\d{2})[-年/](0?[1-9]|1[0-2])[-月/]([12][0-9]|3[01]|0?[1-9])日?"
-)
+DATE_RE = re.compile(r"(20\d{2}|19\d{2})[-年/](0?[1-9]|1[0-2])[-月/]([12][0-9]|3[01]|0?[1-9])日?")
 
 UNIT_MULTIPLIERS = {
     "元": 1,
@@ -88,8 +86,10 @@ def normalize_amount(
     if number is None:
         return None
     unit_label = match.group(2)
-    multiplier = UNIT_MULTIPLIERS.get(unit_label or "", 1) if unit_label else (
-        UNIT_MULTIPLIERS.get(default_unit, 1) if default_unit else 1
+    multiplier = (
+        UNIT_MULTIPLIERS.get(unit_label or "", 1)
+        if unit_label
+        else (UNIT_MULTIPLIERS.get(default_unit, 1) if default_unit else 1)
     )
     currency = detect_currency(text) or default_currency
     return TypedValue(
@@ -184,9 +184,7 @@ def normalize_field(
 ) -> TypedValue | None:
     """Normalize ``text`` according to the field's declared value type."""
     if field.value_type == ValueType.AMOUNT:
-        return normalize_amount(
-            text, default_currency=default_currency, default_unit=default_unit
-        )
+        return normalize_amount(text, default_currency=default_currency, default_unit=default_unit)
     if field.value_type == ValueType.RATE:
         return normalize_rate(text)
     if field.value_type == ValueType.DATE:

@@ -307,11 +307,7 @@ def test_hard_delete_token_expires(client: TestClient) -> None:
     with client.app.state.database.session() as db:
         from app.models import HardDeleteRequest
 
-        request_row = (
-            db.query(HardDeleteRequest)
-            .filter_by(application_id=application_id)
-            .one()
-        )
+        request_row = db.query(HardDeleteRequest).filter_by(application_id=application_id).one()
         request_row.expires_at = datetime.now(UTC) - timedelta(seconds=1)
         db.commit()
     expired = client.post(

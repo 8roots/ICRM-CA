@@ -1155,20 +1155,14 @@ export interface components {
         };
         /** Body_import_lpr_csv_api_v1_admin_lpr_imports_post */
         Body_import_lpr_csv_api_v1_admin_lpr_imports_post: {
-            /**
-             * File
-             * Format: binary
-             */
+            /** File */
             file: string;
             /** Source Authority */
             source_authority: string;
         };
         /** Body_upload_document_api_v1_applications__application_id__documents_post */
         Body_upload_document_api_v1_applications__application_id__documents_post: {
-            /**
-             * File
-             * Format: binary
-             */
+            /** File */
             file: string;
         };
         /** CandidateResponse */
@@ -2267,6 +2261,10 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
         };
         /** WaiverResponse */
         WaiverResponse: {

@@ -147,11 +147,7 @@ def test_multi_page_tiff_keeps_other_pages_reviewable_on_failure() -> None:
         def analyze(self, image: bytes, *, run_ocr: bool) -> Analysis:
             self.ocr_requests.append(run_ocr)
             return Analysis(
-                blocks=(
-                    BlockResult(
-                        0, "paragraph", "本页文字", (10, 20, 70, 40), "ocr", 0.9
-                    ),
-                ),
+                blocks=(BlockResult(0, "paragraph", "本页文字", (10, 20, 70, 40), "ocr", 0.9),),
             )
 
     multi = io.BytesIO()
@@ -167,11 +163,7 @@ def test_multi_page_tiff_keeps_other_pages_reviewable_on_failure() -> None:
             if len(self.ocr_requests) == 2:
                 raise RuntimeError("synthetic second page failure")
             return Analysis(
-                blocks=(
-                    BlockResult(
-                        0, "paragraph", "本页文字", (10, 20, 70, 40), "ocr", 0.9
-                    ),
-                ),
+                blocks=(BlockResult(0, "paragraph", "本页文字", (10, 20, 70, 40), "ocr", 0.9),),
             )
 
     engine = FailSecondPage()
@@ -182,6 +174,7 @@ def test_multi_page_tiff_keeps_other_pages_reviewable_on_failure() -> None:
     assert parsed.pages[0].blocks[0].text == "本页文字"
     assert parsed.pages[1].status == "failed"
     assert parsed.pages[1].error_code == "page_analysis_failed"
+
 
 @pytest.mark.parametrize(
     ("filename", "format_name"),

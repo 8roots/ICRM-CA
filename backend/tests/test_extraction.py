@@ -186,6 +186,22 @@ def test_key_value_table_rate_keeps_period_from_label(app) -> None:
     assert keys["interest_rate"][0]["value"] == "6.0"
 
 
+def test_key_value_table_loan_fees_label_matches_paragraph_rule(app) -> None:
+    # ``必要费用``/``各项费用``/``贷款费用`` must behave the same in a
+    # key-value table row as in a paragraph (golden corpus runs XLSX/CSV).
+    table = (
+        "# 材料\n\n| 项目 | 数值 |\n| --- | --- |"
+        "\n| 必要费用 | 评估费、公证费 |\n| 各项费用 | 服务费 |\n| 贷款费用 | 担保费 |\n"
+    )
+    output, _ = build_output(app, table, "示例企业")
+    keys = field_keys(app, output)
+    assert {candidate["value"] for candidate in keys["loan_fees"]} == {
+        "评估费、公证费",
+        "服务费",
+        "担保费",
+    }
+
+
 def test_extracts_marital_status_shareholder_interest_method_and_query_count(app) -> None:
     material = """# 材料
 

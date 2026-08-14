@@ -116,9 +116,7 @@ def test_reassignment_revokes_previous_owner_immediately(client: TestClient) -> 
     login(client, "owner", "approval officer password")
     assert client.get("/api/v1/applications").json() == []
     assert client.get(f"/api/v1/applications/{application_id}").status_code == 404
-    assert (
-        client.get(f"/api/v1/applications/{application_id}/documents").status_code == 404
-    )
+    assert client.get(f"/api/v1/applications/{application_id}/documents").status_code == 404
 
     # new owner sees the application and can upload; the document is visible
     other = login(client, "other", "approval officer password")
@@ -206,9 +204,7 @@ def test_rbac_matrix(client: TestClient) -> None:
     assert client.get(f"/api/v1/applications/{application_id}").status_code == 403
     assert client.get("/api/v1/applications").status_code == 403
     # owner-scoped material surfaces are not found for a non-owner admin
-    assert (
-        client.get(f"/api/v1/applications/{application_id}/documents").status_code == 404
-    )
+    assert client.get(f"/api/v1/applications/{application_id}/documents").status_code == 404
     assert client.get(f"/api/v1/applications/{application_id}/candidates").status_code == 404
     upload = client.post(
         f"/api/v1/applications/{application_id}/documents",

@@ -79,7 +79,7 @@ test('负责人查看证据预览、高亮原页区域并人工确认与重跑',
 
   // explicit parser rerun with reason produces a new output version
   await page.getByLabel('解析重跑原因').fill('使用固定新模型重新解析')
-  await page.getByRole('button', { name: '重跑解析与印章检测' }).click()
+  await page.getByRole('button', { name: '重跑解析' }).click()
   await expect(page.getByText('最近一次重跑原因：使用固定新模型重新解析')).toBeVisible()
   await expect(page.getByText('v2')).toBeVisible({ timeout: 60_000 })
 })

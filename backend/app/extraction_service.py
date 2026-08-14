@@ -124,11 +124,7 @@ def _confident_field_keys(db: Session, application_id: str) -> set[str]:
         .filter(Document.application_id == application_id)
         .all()
     )
-    confident = {
-        key
-        for key, confidence in rows
-        if confidence >= MIN_AMBIGUOUS_CONFIDENCE
-    }
+    confident = {key for key, confidence in rows if confidence >= MIN_AMBIGUOUS_CONFIDENCE}
     resolution_keys = (
         db.query(Resolution.field_key)
         .filter(Resolution.application_id == application_id)
@@ -304,9 +300,7 @@ def run_candidate_extraction(
         return ExtractionStepResult(JobStatus.SUCCESS, None)
 
     unresolved = [
-        key
-        for key in cloud_targets()
-        if key not in _confident_field_keys(db, application.id)
+        key for key in cloud_targets() if key not in _confident_field_keys(db, application.id)
     ]
     slices = _select_slices(output, unresolved)
     if not slices:

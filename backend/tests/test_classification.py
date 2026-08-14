@@ -85,11 +85,7 @@ def test_run_classification_stores_candidates_once_per_document() -> None:
         document = _document(db, "材料.pdf", "a")
         run_classification(db, document, OutputStub("借款申请书 贷款申请 企业名称：示例公司"))
         run_classification(db, document, OutputStub("借款申请书 贷款申请 企业名称：示例公司"))
-        rows = (
-            db.query(MaterialClassificationCandidate)
-            .filter_by(document_id=document.id)
-            .all()
-        )
+        rows = db.query(MaterialClassificationCandidate).filter_by(document_id=document.id).all()
         categories = {(row.category, row.method) for row in rows}
         assert ("loan_application", "content_keyword") in categories
         # each (category, method) stored exactly once
@@ -106,8 +102,6 @@ def test_run_classification_stores_nothing_when_no_candidates() -> None:
         document = _document(db, "无类别.pdf", "b")
         run_classification(db, document, OutputStub("普通无关键词文本"))
         assert (
-            db.query(MaterialClassificationCandidate)
-            .filter_by(document_id=document.id)
-            .count()
+            db.query(MaterialClassificationCandidate).filter_by(document_id=document.id).count()
             == 0
         )

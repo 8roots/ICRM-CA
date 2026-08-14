@@ -24,9 +24,7 @@ def upgrade() -> None:
         "applications",
         sa.Column("archived_at", sa.DateTime(timezone=True), nullable=True),
     )
-    op.create_index(
-        "ix_applications_lifecycle_state", "applications", ["lifecycle_state"]
-    )
+    op.create_index("ix_applications_lifecycle_state", "applications", ["lifecycle_state"])
 
     op.create_table(
         "audit_events",

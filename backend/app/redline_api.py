@@ -445,9 +445,7 @@ def run_staleness(run: RedlineRun, db: Db, application: Application) -> tuple[bo
             )
             if uses_lpr:
                 lpr_info = run.input_snapshot.get("lpr") or {}
-                as_of_text = lpr_info.get("as_of_date") or run.input_snapshot.get(
-                    "evaluation_date"
-                )
+                as_of_text = lpr_info.get("as_of_date") or run.input_snapshot.get("evaluation_date")
                 as_of = date.fromisoformat(as_of_text)
                 current_lpr = current_lpr_entry(db, as_of)
                 run_lpr_id = lpr_info.get("entry_id")

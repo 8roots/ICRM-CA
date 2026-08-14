@@ -117,12 +117,11 @@ def _mask_known(text: str, aliases: dict[str, str]) -> str:
 def _mask_patterns(application_id: str, text: str, aliases: dict[str, str]) -> tuple[str, int]:
     masked = 0
     for category, pattern in ALIAS_CATEGORIES:
+
         def replace(match: re.Match) -> str:
             nonlocal masked
             identifier = match.group(0)
-            index = (
-                sum(1 for value in aliases.values() if value.startswith(f"[{category}")) + 1
-            )
+            index = sum(1 for value in aliases.values() if value.startswith(f"[{category}")) + 1
             alias = _stable_alias(application_id, category, identifier, index)
             aliases[identifier] = alias
             masked += 1

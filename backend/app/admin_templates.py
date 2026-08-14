@@ -199,9 +199,7 @@ def update_template(
     except ValueError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from None
     template.name = payload.name
-    db.query(ChecklistItem).filter_by(template_id=template.id).delete(
-        synchronize_session=False
-    )
+    db.query(ChecklistItem).filter_by(template_id=template.id).delete(synchronize_session=False)
     db.expire(template, ["items"])
     for order, item in enumerate(payload.items, start=1):
         db.add(

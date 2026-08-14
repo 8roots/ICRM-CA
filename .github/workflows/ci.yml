@@ -1,0 +1,204 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (ruff + pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.32"
+      - name: Sync dependencies
+        working-directory: backend
+        run: uv sync --frozen
+      - name: Format check
+        working-directory: backend
+        run: uv run ruff format --check app tests alembic scripts
+      - name: Lint
+        working-directory: backend
+        run: uv run ruff check app tests alembic scripts
+      - name: Tests (unit/integration via testcontainers)
+        working-directory: backend
+        run: uv run pytest
+
+  frontend:
+    name: Frontend (typecheck + vitest + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+      - name: Typecheck
+        working-directory: frontend
+        run: npm run typecheck
+      - name: Unit tests
+        working-directory: frontend
+        run: npm test
+      - name: Production build
+        working-directory: frontend
+        run: npm run build
+
+  openapi-drift:
+    name: OpenAPI / golden-report drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.32"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Sync backend
+        working-directory: backend
+        run: uv sync --frozen
+      - name: Export OpenAPI
+        working-directory: backend
+        run: uv run python scripts/export_openapi.py
+      - name: Golden extraction report
+        working-directory: backend
+        run: uv run python scripts/evaluate_extraction.py
+      - name: Install frontend
+        working-directory: frontend
+        run: npm ci
+      - name: Regenerate API types
+        working-directory: frontend
+        run: npm run generate:api
+      - name: Assert no drift
+        run: |
+          git diff --exit-code -- backend/openapi.json frontend/src/api/generated.ts docs/release/golden-report.md
+          echo "generated artifacts are current"
+
+  scan:
+    name: Dependency vulnerability scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.32"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Backend (pip-audit on locked deps)
+        working-directory: backend
+        run: |
+          uv export --frozen --all-groups --no-emit-project -o /tmp/requirements.txt
+          # --python 3.11: pip-audit dry-installs into its own venv, and the
+          # locked runtime (paddlepaddle etc.) only ships cp311 wheels
+          uvx --python 3.11 pip-audit -r /tmp/requirements.txt
+      - name: Frontend (npm audit)
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+  compose-smoke:
+    name: Compose end-to-end smoke
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start the stack
+        run: docker compose up -d --build
+      - name: Wait for readiness
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://localhost:8080/health/ready | grep -q '"status":"ready"'; then
+              echo "stack ready"; exit 0
+            fi
+            sleep 10
+          done
+          echo "stack did not become ready" >&2
+          docker compose logs --tail 100 || true
+          exit 1
+      - name: Smoke the API and frontend
+        run: |
+          curl -fsS http://localhost:8080/health/live > /dev/null
+          curl -fsS -o /dev/null http://localhost:8080/
+          echo "smoke ok"
+      - name: No dev default credentials reachable
+        run: |
+          set +e
+          body=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+            -H 'Origin: http://localhost:8080' -H 'Content-Type: application/json' \
+            -d '{"username":"administrator","password":"local-development-only"}')
+          code=$?
+          if [ $code -eq 0 ] && echo "$body" | grep -q '204'; then
+            echo "unexpected: default credentials worked" >&2; exit 1
+          fi
+          echo "default credentials rejected (HTTP $code)"
+
+  e2e:
+    name: Playwright e2e (corporate/individual demo + matrix)
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Build and start the stack
+        run: docker compose up -d --build
+      - name: Wait for readiness
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://localhost:8080/health/ready | grep -q '"status":"ready"'; then
+              echo "stack ready"; exit 0
+            fi
+            sleep 10
+          done
+          echo "stack did not become ready" >&2
+          docker compose logs --tail 100 || true
+          exit 1
+      - name: Seed e2e accounts (fresh clone, no hidden state)
+        run: |
+          docker compose exec -T api env \
+            ICRM_E2E_ADMIN_USERNAME="$E2E_ADMIN_USERNAME" \
+            ICRM_E2E_ADMIN_PASSWORD="$E2E_ADMIN_PASSWORD" \
+            ICRM_E2E_OFFICER_USERNAME="$E2E_OFFICER_USERNAME" \
+            ICRM_E2E_OFFICER_PASSWORD="$E2E_OFFICER_PASSWORD" \
+            python -m scripts.seed_e2e
+        env:
+          E2E_ADMIN_USERNAME: e2e-admin
+          E2E_ADMIN_PASSWORD: e2e-admin-${{ github.run_id }}-${{ github.run_attempt }}
+          E2E_OFFICER_USERNAME: e2e-officer
+          E2E_OFFICER_PASSWORD: e2e-officer-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Install Playwright browser
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Run e2e suite
+        working-directory: frontend
+        run: npx playwright test
+        env:
+          E2E_USERNAME: e2e-officer
+          E2E_PASSWORD: e2e-officer-${{ github.run_id }}-${{ github.run_attempt }}
+          E2E_ADMIN_USERNAME: e2e-admin
+          E2E_ADMIN_PASSWORD: e2e-admin-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Upload Playwright artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: frontend/.playwright-results/
+          if-no-files-found: ignore

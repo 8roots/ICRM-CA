@@ -190,15 +190,13 @@ def test_publication_events(client: TestClient) -> None:
 def test_audit_api_is_read_only(client: TestClient) -> None:
     """The audit surface has no mutation endpoints at all."""
     login(client, "admin", "administrator password")
-    methods = {
-        (route.path, method)
-        for route in client.app.routes
-        if "/audit" in route.path
-        for method in getattr(route, "methods", [])
+    paths = client.app.openapi()["paths"]
+    audit_paths = {
+        path: set(methods) for path, methods in paths.items() if "audit" in path
     }
-    assert methods == {
-        ("/api/v1/audit/events", "GET"),
-        ("/api/v1/applications/{application_id}/audit-events", "GET"),
+    assert audit_paths == {
+        "/api/v1/audit/events": {"get"},
+        "/api/v1/applications/{application_id}/audit-events": {"get"},
     }
 
 

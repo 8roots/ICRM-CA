@@ -160,9 +160,7 @@ def test_live_draft_reports_no_template_for_unmatched_product(client: TestClient
     with client.app.state.database.session() as db:
         from app.models import Application
 
-        application = (
-            db.query(Application).filter_by(borrower_name="owner企业").one()
-        )
+        application = db.query(Application).filter_by(borrower_name="owner企业").one()
         application.product = "汽车金融"
         db.commit()
         application_id = application.id
@@ -184,9 +182,7 @@ def test_live_draft_initial_states(client: TestClient) -> None:
     with client.app.state.database.session() as db:
         from app.models import Application
 
-        application_id = (
-            db.query(Application).filter_by(borrower_name="owner企业").one().id
-        )
+        application_id = db.query(Application).filter_by(borrower_name="owner企业").one().id
     draft = client.get(f"/api/v1/applications/{application_id}/completeness")
     body = draft.json()
     assert body["template"]["code"] == "DEMO-CORP-OPERATING"
@@ -294,9 +290,7 @@ def test_admin_template_lifecycle_and_immutability(client: TestClient) -> None:
 
     # copy to change creates a new draft version, keeping the code, and the
     # draft is editable before it is published
-    copied = client.post(
-        f"/api/v1/admin/completeness-templates/{template_id}/copy", headers=csrf
-    )
+    copied = client.post(f"/api/v1/admin/completeness-templates/{template_id}/copy", headers=csrf)
     assert copied.status_code == 201
     assert copied.json()["code"] == "CORP-OPERATING-2026"
     assert copied.json()["version"] == 2
@@ -390,9 +384,7 @@ def test_admin_create_validates_items_and_code(client: TestClient) -> None:
 
 def test_officer_cannot_manage_templates(client: TestClient) -> None:
     csrf = login(client, "owner", "approval officer password")
-    assert (
-        client.get("/api/v1/admin/completeness-templates").status_code == 403
-    )
+    assert client.get("/api/v1/admin/completeness-templates").status_code == 403
     assert (
         client.post(
             "/api/v1/admin/completeness-templates",
@@ -419,9 +411,7 @@ def test_classification_mapping_waiver_and_formal_run(client: TestClient) -> Non
     with client.app.state.database.session() as db:
         from app.models import Application
 
-        application_id = (
-            db.query(Application).filter_by(borrower_name="owner企业").one().id
-        )
+        application_id = db.query(Application).filter_by(borrower_name="owner企业").one().id
         document = add_document(db, application_id, "执照扫描.pdf", "c")
         document_id = document.id
         template = published_template(db)
@@ -473,9 +463,9 @@ def test_classification_mapping_waiver_and_formal_run(client: TestClient) -> Non
     assert mapped.status_code == 201
     states = {
         item["code"]: item["state"]
-        for item in client.get(
-            f"/api/v1/applications/{application_id}/completeness"
-        ).json()["items"]
+        for item in client.get(f"/api/v1/applications/{application_id}/completeness").json()[
+            "items"
+        ]
     }
     assert states["license"] == "pending_confirmation"
 
@@ -527,9 +517,9 @@ def test_classification_mapping_waiver_and_formal_run(client: TestClient) -> Non
     assert review.status_code == 201
     states = {
         item["code"]: item["state"]
-        for item in client.get(
-            f"/api/v1/applications/{application_id}/completeness"
-        ).json()["items"]
+        for item in client.get(f"/api/v1/applications/{application_id}/completeness").json()[
+            "items"
+        ]
     }
     assert states["license"] == "satisfied"
 
@@ -543,9 +533,9 @@ def test_classification_mapping_waiver_and_formal_run(client: TestClient) -> Non
     assert waived.json()["reason"] == "客户暂未提供，已线下核实"
     states = {
         item["code"]: item["state"]
-        for item in client.get(
-            f"/api/v1/applications/{application_id}/completeness"
-        ).json()["items"]
+        for item in client.get(f"/api/v1/applications/{application_id}/completeness").json()[
+            "items"
+        ]
     }
     assert states["purpose_contract"] == "manually_waived"
 
@@ -558,9 +548,7 @@ def test_classification_mapping_waiver_and_formal_run(client: TestClient) -> Non
     body = run.json()
     assert body["content_hash"]
     assert body["template_snapshot"]["code"] == "DEMO-CORP-OPERATING"
-    result_states = {
-        item["item_code"]: item["state"] for item in body["result_snapshot"]["items"]
-    }
+    result_states = {item["item_code"]: item["state"] for item in body["result_snapshot"]["items"]}
     assert result_states["license"] == "satisfied"
     assert result_states["purpose_contract"] == "manually_waived"
     assert result_states["collateral_certificate"] == "not_applicable"
@@ -582,9 +570,7 @@ def test_classification_mapping_waiver_and_formal_run(client: TestClient) -> Non
         headers=csrf,
     )
     assert mapped_delete.status_code == 204
-    runs = client.get(
-        f"/api/v1/applications/{application_id}/completeness-runs"
-    ).json()
+    runs = client.get(f"/api/v1/applications/{application_id}/completeness-runs").json()
     assert runs[0]["id"] == body["id"]
     assert runs[0]["stale"] is True
     assert runs[0]["stale_reason"] == "mapping_change"
@@ -595,9 +581,7 @@ def test_classification_mapping_waiver_and_formal_run(client: TestClient) -> Non
     )
     assert rerun.status_code == 201
     assert rerun.json()["id"] != body["id"]
-    runs = client.get(
-        f"/api/v1/applications/{application_id}/completeness-runs"
-    ).json()
+    runs = client.get(f"/api/v1/applications/{application_id}/completeness-runs").json()
     assert {run["id"] for run in runs} == {body["id"], rerun.json()["id"]}
     assert runs[0]["stale"] is False
 
@@ -619,9 +603,7 @@ def test_signature_requirement_needs_signature_confirmation(client: TestClient) 
     with client.app.state.database.session() as db:
         from app.models import Application
 
-        application_id = (
-            db.query(Application).filter_by(borrower_name="owner企业").one().id
-        )
+        application_id = db.query(Application).filter_by(borrower_name="owner企业").one().id
         document = add_document(db, application_id, "授权书.pdf", "d")
         document_id = document.id
         template = published_template(db)
@@ -637,9 +619,9 @@ def test_signature_requirement_needs_signature_confirmation(client: TestClient) 
     assert mapped.status_code == 201
     states = {
         item["code"]: item["state"]
-        for item in client.get(
-            f"/api/v1/applications/{application_id}/completeness"
-        ).json()["items"]
+        for item in client.get(f"/api/v1/applications/{application_id}/completeness").json()[
+            "items"
+        ]
     }
     assert states["credit_authorization"] == "pending_confirmation"
 
@@ -667,9 +649,9 @@ def test_signature_requirement_needs_signature_confirmation(client: TestClient) 
     assert signature.status_code == 201
     states = {
         item["code"]: item["state"]
-        for item in client.get(
-            f"/api/v1/applications/{application_id}/completeness"
-        ).json()["items"]
+        for item in client.get(f"/api/v1/applications/{application_id}/completeness").json()[
+            "items"
+        ]
     }
     assert states["credit_authorization"] == "satisfied"
 
@@ -730,9 +712,7 @@ def test_conditional_items_activate_with_resolutions(client: TestClient) -> None
     with client.app.state.database.session() as db:
         from app.models import Application, Resolution
 
-        application_id = (
-            db.query(Application).filter_by(borrower_name="owner企业").one().id
-        )
+        application_id = db.query(Application).filter_by(borrower_name="owner企业").one().id
         db.add(
             Resolution(
                 application_id=application_id,
@@ -747,9 +727,9 @@ def test_conditional_items_activate_with_resolutions(client: TestClient) -> None
         db.commit()
     states = {
         item["code"]: item["state"]
-        for item in client.get(
-            f"/api/v1/applications/{application_id}/completeness"
-        ).json()["items"]
+        for item in client.get(f"/api/v1/applications/{application_id}/completeness").json()[
+            "items"
+        ]
     }
     assert states["collateral_certificate"] == "missing"
     assert states["collateral_appraisal"] == "missing"
@@ -774,9 +754,7 @@ def test_production_rejects_demo_templates_for_formal_reports() -> None:
                 "product": "经营贷",
                 "borrower_type": "corporate",
                 "demo_only": True,
-                "items": [
-                    {"code": "license", "label": "营业执照", "category": "basic_info"}
-                ],
+                "items": [{"code": "license", "label": "营业执照", "category": "basic_info"}],
             },
         )
         assert demo.status_code == 201
@@ -791,9 +769,7 @@ def test_production_rejects_demo_templates_for_formal_reports() -> None:
         with client.app.state.database.session() as db:
             from app.models import Application
 
-            application_id = (
-                db.query(Application).filter_by(borrower_name="owner企业").one().id
-            )
+            application_id = db.query(Application).filter_by(borrower_name="owner企业").one().id
         draft = client.get(f"/api/v1/applications/{application_id}/completeness")
         assert draft.status_code == 200
         assert draft.json()["formal_run_blocked_reason"] is not None
@@ -839,9 +815,7 @@ def test_production_allows_non_demo_template_formal_report() -> None:
         with client.app.state.database.session() as db:
             from app.models import Application
 
-            application_id = (
-                db.query(Application).filter_by(borrower_name="owner企业").one().id
-            )
+            application_id = db.query(Application).filter_by(borrower_name="owner企业").one().id
         run = client.post(
             f"/api/v1/applications/{application_id}/completeness-runs",
             headers={**owner_csrf, "Idempotency-Key": "prod-ok"},
@@ -855,22 +829,16 @@ def test_completeness_is_owner_scoped(client: TestClient) -> None:
     with client.app.state.database.session() as db:
         from app.models import Application
 
-        owner_application_id = (
-            db.query(Application).filter_by(borrower_name="owner企业").one().id
-        )
-        other_application_id = (
-            db.query(Application).filter_by(borrower_name="other企业").one().id
-        )
+        owner_application_id = db.query(Application).filter_by(borrower_name="owner企业").one().id
+        other_application_id = db.query(Application).filter_by(borrower_name="other企业").one().id
         owner_document = add_document(db, owner_application_id, "他人材料.pdf", "e")
         db.commit()
         owner_document_id = owner_document.id
     assert (
-        client.get(f"/api/v1/applications/{owner_application_id}/completeness").status_code
-        == 404
+        client.get(f"/api/v1/applications/{owner_application_id}/completeness").status_code == 404
     )
     assert (
-        client.get(f"/api/v1/applications/{other_application_id}/completeness").status_code
-        == 200
+        client.get(f"/api/v1/applications/{other_application_id}/completeness").status_code == 200
     )
     # a non-owner cannot confirm another application's material classification
     assert (
@@ -887,8 +855,7 @@ def test_completeness_is_owner_scoped(client: TestClient) -> None:
     # administrator is not the owner either
     admin_csrf = login(client, "admin", "administrator password")
     assert (
-        client.get(f"/api/v1/applications/{owner_application_id}/completeness").status_code
-        == 404
+        client.get(f"/api/v1/applications/{owner_application_id}/completeness").status_code == 404
     )
     assert (
         client.post(
@@ -904,9 +871,7 @@ def test_resolution_change_marks_current_run_stale(client: TestClient) -> None:
     with client.app.state.database.session() as db:
         from app.models import Application
 
-        application_id = (
-            db.query(Application).filter_by(borrower_name="owner企业").one().id
-        )
+        application_id = db.query(Application).filter_by(borrower_name="owner企业").one().id
     run = client.post(
         f"/api/v1/applications/{application_id}/completeness-runs",
         headers={**csrf, "Idempotency-Key": "run-before-resolution"},
@@ -925,9 +890,7 @@ def test_resolution_change_marks_current_run_stale(client: TestClient) -> None:
         },
     )
     assert resolution.status_code == 201
-    runs = client.get(
-        f"/api/v1/applications/{application_id}/completeness-runs"
-    ).json()
+    runs = client.get(f"/api/v1/applications/{application_id}/completeness-runs").json()
     assert runs[0]["stale"] is True
     assert runs[0]["stale_reason"] == "condition_context_change"
 
@@ -937,9 +900,7 @@ def test_latest_seal_review_overrides_older_present(client: TestClient) -> None:
     with client.app.state.database.session() as db:
         from app.models import Application, DocumentPage, SealCandidate
 
-        application_id = (
-            db.query(Application).filter_by(borrower_name="owner企业").one().id
-        )
+        application_id = db.query(Application).filter_by(borrower_name="owner企业").one().id
         document = add_document(db, application_id, "盖章材料.pdf", "g")
         output = DocumentOutput(
             document_id=document.id,
@@ -991,9 +952,9 @@ def test_latest_seal_review_overrides_older_present(client: TestClient) -> None:
     assert present.status_code == 201
     states = {
         item["code"]: item["state"]
-        for item in client.get(
-            f"/api/v1/applications/{application_id}/completeness"
-        ).json()["items"]
+        for item in client.get(f"/api/v1/applications/{application_id}/completeness").json()[
+            "items"
+        ]
     }
     assert states["license"] == "satisfied"
 
@@ -1011,9 +972,9 @@ def test_latest_seal_review_overrides_older_present(client: TestClient) -> None:
     assert absent.status_code == 201
     states = {
         item["code"]: item["state"]
-        for item in client.get(
-            f"/api/v1/applications/{application_id}/completeness"
-        ).json()["items"]
+        for item in client.get(f"/api/v1/applications/{application_id}/completeness").json()[
+            "items"
+        ]
     }
     assert states["license"] == "pending_confirmation"
 
@@ -1023,9 +984,7 @@ def test_formal_run_without_template_is_rejected(client: TestClient) -> None:
     with client.app.state.database.session() as db:
         from app.models import Application
 
-        application_id = (
-            db.query(Application).filter_by(borrower_name="owner企业").one().id
-        )
+        application_id = db.query(Application).filter_by(borrower_name="owner企业").one().id
         # retire the applicable template so nothing is published
         template = published_template(db)
         template.status = TemplateStatus.RETIRED

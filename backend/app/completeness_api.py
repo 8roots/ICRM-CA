@@ -164,17 +164,13 @@ class CreateWaiverRequest(BaseModel):
 
 
 def owned_application(db: Db, application_id: str, owner_id: str) -> Application:
-    application = (
-        db.query(Application).filter_by(id=application_id, owner_id=owner_id).first()
-    )
+    application = db.query(Application).filter_by(id=application_id, owner_id=owner_id).first()
     if not application:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Application not found")
     return application
 
 
-def published_applicable_template(
-    db: Db, application: Application
-) -> CompletenessTemplate | None:
+def published_applicable_template(db: Db, application: Application) -> CompletenessTemplate | None:
     return (
         db.query(CompletenessTemplate)
         .filter_by(
@@ -187,22 +183,14 @@ def published_applicable_template(
 
 
 def document_in_application(db: Db, application_id: str, document_id: str) -> Document:
-    document = (
-        db.query(Document)
-        .filter_by(id=document_id, application_id=application_id)
-        .first()
-    )
+    document = db.query(Document).filter_by(id=document_id, application_id=application_id).first()
     if not document:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Document not in application")
     return document
 
 
 def item_in_template(db: Db, template: CompletenessTemplate, item_id: str) -> ChecklistItem:
-    item = (
-        db.query(ChecklistItem)
-        .filter_by(id=item_id, template_id=template.id)
-        .first()
-    )
+    item = db.query(ChecklistItem).filter_by(id=item_id, template_id=template.id).first()
     if not item:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -301,9 +289,7 @@ def _run_evaluation(
             "requires_signature": item.requires_signature,
             "condition": item.condition,
             "condition_label": (
-                CONDITION_LABELS.get(item.condition.get("requires"))
-                if item.condition
-                else None
+                CONDITION_LABELS.get(item.condition.get("requires")) if item.condition else None
             ),
             "state": states[item.code].value,
             "state_label": STATE_LABELS[states[item.code]],
@@ -344,8 +330,8 @@ def get_completeness(
             formal_run_blocked_reason="无已发布适用模板",
         )
 
-    items, confirmed_category, seal_present, signature_present, context = (
-        _run_evaluation(db, application, template)
+    items, confirmed_category, seal_present, signature_present, context = _run_evaluation(
+        db, application, template
     )
     documents = (
         db.query(Document)
@@ -360,9 +346,7 @@ def get_completeness(
         .all()
     )
     candidates_by_document: dict[str, list[ClassificationCandidateResponse]] = {}
-    for candidate in sorted(
-        candidate_rows, key=lambda item: (-item.confidence, item.category)
-    ):
+    for candidate in sorted(candidate_rows, key=lambda item: (-item.confidence, item.category)):
         candidates_by_document.setdefault(candidate.document_id, []).append(
             ClassificationCandidateResponse(
                 category=candidate.category,
@@ -447,11 +431,7 @@ def confirm_classification(
         response.status_code = status.HTTP_200_OK
         confirmation = db.get(ClassificationConfirmation, replay_id)
         return _document_response(db, document, confirmation)
-    confirmation = (
-        db.query(ClassificationConfirmation)
-        .filter_by(document_id=document_id)
-        .first()
-    )
+    confirmation = db.query(ClassificationConfirmation).filter_by(document_id=document_id).first()
     if confirmation:
         confirmation.category = payload.category.value
         confirmation.actor_id = user.id
@@ -464,9 +444,7 @@ def confirm_classification(
         )
         db.add(confirmation)
     db.flush()
-    add_idempotency_record(
-        db, user.id, operation, idempotency_key, request_hash, confirmation.id
-    )
+    add_idempotency_record(db, user.id, operation, idempotency_key, request_hash, confirmation.id)
     mark_runs_stale(db, application_id, "classification_change")
     record_audit(
         db,
@@ -508,10 +486,8 @@ def _document_response(
             )
             for candidate in candidates
         ],
-        seal_confirmed=document.id
-        in seal_present_documents(db, document.application_id),
-        signature_confirmed=document.id
-        in signature_present_documents(db, document.application_id),
+        seal_confirmed=document.id in seal_present_documents(db, document.application_id),
+        signature_confirmed=document.id in signature_present_documents(db, document.application_id),
     )
 
 
@@ -638,9 +614,7 @@ def create_waiver(
         response.status_code = status.HTTP_200_OK
         return as_waiver(db.get(WaiverRecord, replay_id))
     existing = (
-        db.query(WaiverRecord)
-        .filter_by(application_id=application_id, item_id=item.id)
-        .first()
+        db.query(WaiverRecord).filter_by(application_id=application_id, item_id=item.id).first()
     )
     if existing:
         response.status_code = status.HTTP_200_OK
@@ -728,9 +702,7 @@ def create_completeness_run(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
             "Production mode rejects demo templates for formal reports",
         )
-    request_hash = hashlib.sha256(
-        f"{application_id}:{template.id}".encode()
-    ).hexdigest()
+    request_hash = hashlib.sha256(f"{application_id}:{template.id}".encode()).hexdigest()
     operation = f"create_completeness_run:{application_id}"
     replay_id = replay_resource_id(db, user.id, operation, idempotency_key, request_hash)
     if replay_id:
@@ -752,9 +724,7 @@ def create_completeness_run(
     mark_runs_stale(db, application_id, "new_run")
     db.add(run)
     db.flush()
-    add_idempotency_record(
-        db, user.id, operation, idempotency_key, request_hash, run.id
-    )
+    add_idempotency_record(db, user.id, operation, idempotency_key, request_hash, run.id)
     record_audit(
         db,
         event_type=COMPLETENESS_RUN_CREATED,
@@ -789,11 +759,7 @@ def list_completeness_runs(
 
 
 def owned_run(db: Db, application_id: str, run_id: str) -> CompletenessRun:
-    run = (
-        db.query(CompletenessRun)
-        .filter_by(id=run_id, application_id=application_id)
-        .first()
-    )
+    run = db.query(CompletenessRun).filter_by(id=run_id, application_id=application_id).first()
     if not run:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Completeness run not found")
     return run

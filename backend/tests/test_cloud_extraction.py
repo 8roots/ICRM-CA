@@ -111,9 +111,7 @@ def test_cloud_receives_only_redacted_slice_for_unresolved_field(app) -> None:
         ]
     )
     with app.state.database.session() as db:
-        result = run_candidate_extraction(
-            db, db.get(Document, document_id), output, cloud
-        )
+        result = run_candidate_extraction(db, db.get(Document, document_id), output, cloud)
 
     assert result.step_status == JobStatus.SUCCESS
     assert result.error_code is None
@@ -148,9 +146,7 @@ def test_local_candidates_remain_when_cloud_is_unavailable(app) -> None:
     output, application_id, document_id = build(app, CLOUD_MATERIAL)
     cloud = MockCloud(error="deepseek_unavailable")
     with app.state.database.session() as db:
-        result = run_candidate_extraction(
-            db, db.get(Document, document_id), output, cloud
-        )
+        result = run_candidate_extraction(db, db.get(Document, document_id), output, cloud)
 
     assert result.step_status == JobStatus.PARTIAL_SUCCESS
     assert result.error_code == "deepseek_unavailable"
@@ -172,9 +168,7 @@ def test_redaction_failure_prevents_the_cloud_request(app, monkeypatch) -> None:
 
     monkeypatch.setattr("app.extraction_service.verify_redaction", failing_verify)
     with app.state.database.session() as db:
-        result = run_candidate_extraction(
-            db, db.get(Document, document_id), output, cloud
-        )
+        result = run_candidate_extraction(db, db.get(Document, document_id), output, cloud)
 
     assert result.step_status == JobStatus.PARTIAL_SUCCESS
     assert result.error_code == "redaction_failed"
@@ -208,14 +202,10 @@ def test_low_confidence_candidate_leaves_field_open_for_cloud(app) -> None:
         local.confidence = 0.4
         db.commit()
     cloud = MockCloud(
-        results=[
-            {"field_key": "collateral_type", "value": "某房产", "confidence": 0.95}
-        ]
+        results=[{"field_key": "collateral_type", "value": "某房产", "confidence": 0.95}]
     )
     with app.state.database.session() as db:
-        result = run_candidate_extraction(
-            db, db.get(Document, document_id), output, cloud
-        )
+        result = run_candidate_extraction(db, db.get(Document, document_id), output, cloud)
 
     assert result.step_status == JobStatus.SUCCESS
     assert [item.field_key for item in cloud.calls[0]] == ["collateral_type"]

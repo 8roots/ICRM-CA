@@ -772,9 +772,7 @@ class AuditEvent(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     event_type: Mapped[str] = mapped_column(String(80), index=True)
-    actor_id: Mapped[str | None] = mapped_column(
-        ForeignKey("users.id"), nullable=True, index=True
-    )
+    actor_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     actor_username: Mapped[str | None] = mapped_column(String(100), nullable=True)
     resource_type: Mapped[str] = mapped_column(String(40), index=True)
     resource_id: Mapped[str | None] = mapped_column(String(40), nullable=True, index=True)

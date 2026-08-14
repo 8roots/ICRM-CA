@@ -263,9 +263,7 @@ def _parse_pdf(path: str, engine: ImageAnalysisEngine) -> ParsedOutput:
     return _finish_output(pages, engine.version)
 
 
-def _finish_output(
-    pages: list[PageResult], model_version: str
-) -> ParsedOutput:
+def _finish_output(pages: list[PageResult], model_version: str) -> ParsedOutput:
     failed_pages = sum(page.status == "failed" for page in pages)
     output_status = "success"
     if failed_pages:

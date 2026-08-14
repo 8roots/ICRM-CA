@@ -1,5 +1,6 @@
 import argparse
 import getpass
+import sys
 
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
@@ -32,9 +33,19 @@ def create_first_admin(db: Session, username: str, password: str) -> User:
 def create_admin_command() -> None:
     parser = argparse.ArgumentParser(description="Create the first ICRM-CA administrator")
     parser.add_argument("username", help="administrator username")
+    parser.add_argument(
+        "--password-stdin",
+        action="store_true",
+        help="read the password (and confirmation) from stdin instead of a TTY; "
+        "used by CI and unattended provisioning",
+    )
     args = parser.parse_args()
-    password = getpass.getpass("Administrator password: ")
-    confirmation = getpass.getpass("Confirm password: ")
+    if args.password_stdin:
+        password = sys.stdin.readline().rstrip("\n")
+        confirmation = sys.stdin.readline().rstrip("\n")
+    else:
+        password = getpass.getpass("Administrator password: ")
+        confirmation = getpass.getpass("Confirm password: ")
     if password != confirmation:
         parser.error("passwords do not match")
     try:

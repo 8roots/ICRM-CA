@@ -55,6 +55,11 @@ async function refresh() {
 
 async function refreshLifecycle() {
   lifecycle.value = await request<Lifecycle>(`/api/v1/applications/${route.params.id}/lifecycle`)
+  // keep the descriptions' state/version in sync with the latest lifecycle
+  if (application.value && lifecycle.value) {
+    application.value.lifecycle_state = lifecycle.value.state
+    application.value.version = lifecycle.value.version
+  }
 }
 
 async function upload(event: Event) {

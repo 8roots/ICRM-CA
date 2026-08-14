@@ -166,9 +166,7 @@ def existing_upload(
         return db.get(Document, replay_id)
     duplicate = db.query(Document).filter_by(application_id=application_id, sha256=sha256).first()
     if duplicate:
-        add_idempotency_record(
-            db, actor_id, operation, idempotency_key, request_hash, duplicate.id
-        )
+        add_idempotency_record(db, actor_id, operation, idempotency_key, request_hash, duplicate.id)
     return duplicate
 
 
@@ -394,9 +392,7 @@ def upload_document(
         except IntegrityError:
             db.rollback()
             request.app.state.object_store.delete(object_key)
-            replay_id = replay_resource_id(
-                db, user.id, operation, idempotency_key, request_hash
-            )
+            replay_id = replay_resource_id(db, user.id, operation, idempotency_key, request_hash)
             replay = db.get(Document, replay_id) if replay_id else None
             if replay:
                 response.status_code = status.HTTP_200_OK
@@ -495,9 +491,7 @@ def download_document(
         source,
         media_type=document.declared_mime or "application/octet-stream",
         headers={
-            "Content-Disposition": (
-                f"attachment; filename*=UTF-8''{quote(document.filename)}"
-            )
+            "Content-Disposition": (f"attachment; filename*=UTF-8''{quote(document.filename)}")
         },
     )
 

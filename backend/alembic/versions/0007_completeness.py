@@ -147,9 +147,7 @@ def upgrade() -> None:
         sa.Column("reason", sa.Text(), nullable=False),
         sa.Column("actor_id", sa.String(36), sa.ForeignKey("users.id"), nullable=False, index=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.UniqueConstraint(
-            "application_id", "item_id", name="uq_waiver_application_item"
-        ),
+        sa.UniqueConstraint("application_id", "item_id", name="uq_waiver_application_item"),
     )
     op.create_table(
         "completeness_runs",

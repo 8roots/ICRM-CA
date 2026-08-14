@@ -5,6 +5,30 @@
 }
 
 body { margin: 0; }
+
+/* Keyboard accessibility: visible focus for pointer-free navigation. */
+:focus-visible {
+  outline: 2px solid #1f4f78;
+  outline-offset: 2px;
+}
+
+/* Print: drop the chrome so formal reports and evidence print cleanly. */
+@media print {
+  .header {
+    display: none;
+  }
+  body {
+    background: white;
+  }
+  .shell {
+    min-height: 0;
+  }
+  .el-card {
+    box-shadow: none;
+    margin-bottom: 12px;
+  }
+}
+
 .shell { min-height: 100vh; }
 .header {
   display: flex;

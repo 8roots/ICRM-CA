@@ -128,9 +128,7 @@ def test_real_postgres_minio_upload_worker_and_restart(services) -> None:
 
     with TestClient(app, base_url="https://testserver") as client:
         csrf = login(client, "integration-owner")
-        uploaded = upload(
-            client, application_id, csrf, "integration-pdf", parseable_pdf()
-        )
+        uploaded = upload(client, application_id, csrf, "integration-pdf", parseable_pdf())
         assert uploaded.status_code == 202
         assert (
             client.get(f"/api/v1/applications/{application_id}").json()["lifecycle_state"]

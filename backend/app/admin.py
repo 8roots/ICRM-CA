@@ -78,9 +78,7 @@ def as_queue_job(job: DocumentJob) -> QueueJobResponse:
 def queue_status(db: Db, admin: Administrator) -> QueueResponse:
     """Admin task backlog / failure / retry view with worker heartbeats."""
     rows = (
-        db.query(DocumentJob.status, func.count(DocumentJob.id))
-        .group_by(DocumentJob.status)
-        .all()
+        db.query(DocumentJob.status, func.count(DocumentJob.id)).group_by(DocumentJob.status).all()
     )
     by_status = {status_value: count for status_value, count in rows}
     oldest_waiting = (
@@ -91,9 +89,7 @@ def queue_status(db: Db, admin: Administrator) -> QueueResponse:
     )
     recent_failures = (
         db.query(DocumentJob)
-        .filter(
-            DocumentJob.status.in_([JobStatus.FAILED, JobStatus.MANUAL_HANDLING])
-        )
+        .filter(DocumentJob.status.in_([JobStatus.FAILED, JobStatus.MANUAL_HANDLING]))
         .order_by(DocumentJob.created_at.desc())
         .limit(50)
         .all()
@@ -104,9 +100,7 @@ def queue_status(db: Db, admin: Administrator) -> QueueResponse:
             worker_id=worker.worker_id,
             hostname=worker.hostname,
             last_seen_at=worker.last_seen_at,
-            healthy=(
-                now - worker.last_seen_at.replace(tzinfo=UTC) < timedelta(seconds=120)
-            ),
+            healthy=(now - worker.last_seen_at.replace(tzinfo=UTC) < timedelta(seconds=120)),
         )
         for worker in db.query(WorkerHeartbeat).all()
     ]

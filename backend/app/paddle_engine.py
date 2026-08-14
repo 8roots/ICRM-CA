@@ -220,7 +220,6 @@ class PaddleEngine:
             return ()
         crops = [_crop(array, poly) for poly in polys]
         outcomes = [
-            outcome.json["res"]
-            for outcome in self.seal_rec.predict(crops, batch_size=len(crops))
+            outcome.json["res"] for outcome in self.seal_rec.predict(crops, batch_size=len(crops))
         ]
         return seal_candidates_from_results(det_result, outcomes)

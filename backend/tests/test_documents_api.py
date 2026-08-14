@@ -331,9 +331,7 @@ def test_owner_reads_versioned_output_and_reruns_selected_parser_steps() -> None
         )
         versions = client.get(f"/api/v1/documents/{document_id}/outputs").json()
         assert [output["version"] for output in versions] == [1, 2]
-        assert versions[0]["pages"][0]["blocks"][0]["text"] == (
-            "Version one remains reviewable"
-        )
+        assert versions[0]["pages"][0]["blocks"][0]["text"] == ("Version one remains reviewable")
 
 
 def test_owner_confirms_seal_candidate_and_records_signature_presence_manually() -> None:
@@ -435,15 +433,9 @@ def test_output_preview_and_review_resources_respect_ownership_and_ordering() ->
     client.cookies.clear()
     with client:
         other_csrf = login(client, "other")
-        assert (
-            client.get(f"/api/v1/documents/{document_id}/outputs").status_code == 404
-        )
-        assert (
-            client.get(f"/api/v1/documents/{document_id}/pages/1/image").status_code == 404
-        )
-        assert (
-            client.get(f"/api/v1/document-outputs/{output['id']}/reviews").status_code == 404
-        )
+        assert client.get(f"/api/v1/documents/{document_id}/outputs").status_code == 404
+        assert client.get(f"/api/v1/documents/{document_id}/pages/1/image").status_code == 404
+        assert client.get(f"/api/v1/document-outputs/{output['id']}/reviews").status_code == 404
         assert (
             client.post(
                 f"/api/v1/document-outputs/{output['id']}/reviews",
@@ -577,9 +569,7 @@ def test_docx_upload_runs_parsing_without_seal_detection() -> None:
             },
         )
         assert created.status_code == 202
-        steps = {
-            step["name"]: step["status"] for step in created.json()["job"]["steps"]
-        }
+        steps = {step["name"]: step["status"] for step in created.json()["job"]["steps"]}
         assert steps["validation"] == "waiting"
         assert steps["parsing_ocr"] == "waiting"
         assert steps["seal_detection"] == "not_applicable"
@@ -603,16 +593,12 @@ def test_owner_downloads_original_material_and_boundary_is_enforced() -> None:
 
             object_key = db.get(DocumentModel, document_id).object_key
         client.app.state.object_store.delete(object_key)
-        assert (
-            client.get(f"/api/v1/documents/{document_id}/download").status_code == 404
-        )
+        assert client.get(f"/api/v1/documents/{document_id}/download").status_code == 404
 
     client.cookies.clear()
     with client:
         csrf = login(client, "other")
-        assert (
-            client.get(f"/api/v1/documents/{document_id}/download").status_code == 404
-        )
+        assert client.get(f"/api/v1/documents/{document_id}/download").status_code == 404
 
 
 def test_structured_outputs_expose_format_and_native_locators_without_pages() -> None:
@@ -644,9 +630,7 @@ def test_structured_outputs_expose_format_and_native_locators_without_pages() ->
             },
         )
         document_id = uploaded.json()["document"]["id"]
-        parsed = parse_structured(
-            "statement.xlsx", io.BytesIO(buffer.getvalue())
-        )
+        parsed = parse_structured("statement.xlsx", io.BytesIO(buffer.getvalue()))
         with client.app.state.database.session() as db:
             store_parsed_output(db, document_id, parsed)
             db.commit()
@@ -678,10 +662,7 @@ def test_structured_outputs_expose_format_and_native_locators_without_pages() ->
         assert block["cells"][0]["locator"]["cell"] == "A1"
         assert block["cells"][3]["text"] == "1234.5"
         # Structured formats never get a page image endpoint.
-        assert (
-            client.get(f"/api/v1/documents/{document_id}/pages/1/image").status_code
-            == 404
-        )
+        assert client.get(f"/api/v1/documents/{document_id}/pages/1/image").status_code == 404
 
 
 def test_structured_rerun_selects_only_the_parsing_step() -> None:

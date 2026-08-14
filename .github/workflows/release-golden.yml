@@ -1,0 +1,63 @@
+name: Release golden suite (pinned PaddleOCR)
+
+# The pinned-model golden suite: builds the backend image (which downloads and
+# SHA-256-verifies the PaddleOCR artifacts at build time), runs the OCR golden
+# extraction inside that image, and fails unless the freshly computed report
+# matches the committed docs/release/golden-report-ocr.md.
+#
+# Any change to the model pins, Paddle/dependency pins, extraction rules, or
+# the corpus therefore REQUIRES regenerating the OCR report in the same
+# change — a model or dependency change without a rerun fails this job.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/app/paddle_engine.py'
+      - 'backend/scripts/download_models.py'
+      - 'backend/scripts/evaluate_extraction.py'
+      - 'backend/scripts/generate_golden_fixtures.py'
+      - 'backend/pyproject.toml'
+      - 'backend/uv.lock'
+      - 'backend/tests/fixtures/**'
+      - 'docs/release/golden-report-ocr.md'
+  pull_request:
+    paths:
+      - 'backend/app/paddle_engine.py'
+      - 'backend/scripts/download_models.py'
+      - 'backend/scripts/evaluate_extraction.py'
+      - 'backend/scripts/generate_golden_fixtures.py'
+      - 'backend/pyproject.toml'
+      - 'backend/uv.lock'
+      - 'backend/tests/fixtures/**'
+      - 'docs/release/golden-report-ocr.md'
+
+jobs:
+  golden-suite:
+    name: OCR golden suite against pinned models
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image (model download + hash verification)
+        run: docker build -t icrm-backend:golden ./backend
+
+      - name: Run OCR golden evaluation and compare with the committed report
+        run: |
+          docker run --rm \
+            -v "$PWD/backend/tests:/app/tests" \
+            -v "$PWD/docs/release:/out" \
+            --entrypoint python \
+            icrm-backend:golden \
+            scripts/evaluate_extraction.py --engine ocr --report /out/golden-report-ocr.md
+          if ! git diff --exit-code -- docs/release/golden-report-ocr.md; then
+            echo "::error::OCR golden suite no longer matches the committed report." \
+                 "A model/dependency/rule/corpus change requires a golden rerun:" \
+                 "regenerate docs/release/golden-report-ocr.md in the same change" \
+                 "(cd backend && ICRM_MODELS_DIR=<models> uv run python" \
+                 "scripts/evaluate_extraction.py --engine ocr" \
+                 "--report ../docs/release/golden-report-ocr.md)."
+            exit 1
+          fi
+          echo "OCR golden suite matches the committed report"

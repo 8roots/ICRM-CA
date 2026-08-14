@@ -68,10 +68,13 @@ def test_seal_results_map_to_one_candidate_per_page_union_bbox() -> None:
 def test_seal_results_without_detections_or_texts_yield_no_candidates() -> None:
     assert seal_candidates_from_results({"dt_polys": []}, []) == ()
     assert seal_candidates_from_results({}, []) == ()
-    assert seal_candidates_from_results(
-        {"dt_polys": [[[0, 0], [10, 0], [10, 10], [0, 10]]]},
-        [{"rec_text": "", "rec_score": 0.0}],
-    ) == ()
+    assert (
+        seal_candidates_from_results(
+            {"dt_polys": [[[0, 0], [10, 0], [10, 10], [0, 10]]]},
+            [{"rec_text": "", "rec_score": 0.0}],
+        )
+        == ()
+    )
 
 
 def test_verify_artifacts_passes_only_with_matching_sidecar(tmp_path) -> None:

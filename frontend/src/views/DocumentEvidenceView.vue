@@ -584,6 +584,7 @@ onUnmounted(() => {
 }
 .block-box.selected {
   background: rgba(23, 105, 170, 0.25);
+  outline: 3px solid #1769aa;
 }
 .seal-box {
   border-color: rgba(214, 69, 65, 0.75);
@@ -591,6 +592,7 @@ onUnmounted(() => {
 }
 .seal-box.selected {
   background: rgba(214, 69, 65, 0.3);
+  outline: 3px solid #d64541;
 }
 .candidate-note {
   color: #606266;

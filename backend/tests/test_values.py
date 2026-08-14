@@ -70,9 +70,7 @@ def test_date_normalizes_chinese_and_iso_forms() -> None:
 
 
 def test_normalize_field_dispatches_by_declared_type() -> None:
-    amount_field = FieldDef(
-        "x", FieldGroup.PROPOSED_LOAN, "金额", ValueType.AMOUNT, ("金额",)
-    )
+    amount_field = FieldDef("x", FieldGroup.PROPOSED_LOAN, "金额", ValueType.AMOUNT, ("金额",))
     typed = normalize_field(amount_field, "300万元")
     assert typed.type == ValueType.AMOUNT
     assert typed.value == "3000000"

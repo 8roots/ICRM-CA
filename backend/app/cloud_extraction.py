@@ -18,8 +18,8 @@ EXTRACTOR_VERSION = "icrm-deepseek-client-1"
 
 SYSTEM_PROMPT = (
     "你是信贷材料字段抽取助手。只从给定文本中抽取指定字段的值，不推断、不改写、不编造原文中没有的信息。"
-    "返回 JSON 对象 {\"results\": [{\"field_key\": \"...\", \"value\": \"原文中的值\", "
-    "\"confidence\": 0.0-1.0}]}。无法从文本确定某字段时，不要包含该字段。"
+    '返回 JSON 对象 {"results": [{"field_key": "...", "value": "原文中的值", '
+    '"confidence": 0.0-1.0}]}。无法从文本确定某字段时，不要包含该字段。'
     "values 必须逐字来自文本，金额保留原数字和单位，利率保留百分比。"
 )
 

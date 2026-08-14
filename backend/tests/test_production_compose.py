@@ -19,9 +19,7 @@ def compose() -> dict:
 def test_only_proxy_exposes_ports() -> None:
     data = compose()
     services = data["services"]
-    exposed = [
-        name for name, service in services.items() if "ports" in service
-    ]
+    exposed = [name for name, service in services.items() if "ports" in service]
     assert exposed == ["proxy"], f"unexpected exposed services: {exposed}"
 
 

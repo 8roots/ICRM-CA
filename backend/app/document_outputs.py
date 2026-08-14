@@ -222,9 +222,7 @@ def list_outputs(
     return [as_output(output) for output in sorted(document.outputs, key=lambda item: item.version)]
 
 
-@router.get(
-    "/document-outputs/{output_id}/reviews", response_model=list[EvidenceReviewResponse]
-)
+@router.get("/document-outputs/{output_id}/reviews", response_model=list[EvidenceReviewResponse])
 def list_reviews(output_id: str, db: Db, user: CurrentUser) -> list[EvidenceReviewResponse]:
     output = owned_output(db, output_id, user.id)
     return [as_review(review) for review in output.reviews]
@@ -279,9 +277,7 @@ def create_review(
     )
     db.add(review)
     db.flush()
-    add_idempotency_record(
-        db, user.id, operation, idempotency_key, request_hash, review.id
-    )
+    add_idempotency_record(db, user.id, operation, idempotency_key, request_hash, review.id)
     mark_runs_stale(db, output.document.application_id, "evidence_review_change")
     record_audit(
         db,

@@ -180,7 +180,7 @@ def complete_application(
     if state != LifecycleState.PENDING_REVIEW:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            f"Only pending_review applications can be completed, not {state.value}"
+            f"Only pending_review applications can be completed, not {state.value}",
         )
     blockers = completion_blockers(db, application)
     if blockers:
@@ -406,9 +406,7 @@ def confirm_hard_delete(
 
     object_keys = [
         key
-        for (key,) in db.query(Document.object_key)
-        .filter_by(application_id=application_id)
-        .all()
+        for (key,) in db.query(Document.object_key).filter_by(application_id=application_id).all()
     ]
     db.delete(application)  # cascades over all sensitive derivatives
     # The tombstone is created in the same transaction as the row deletion and

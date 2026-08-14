@@ -366,10 +366,7 @@ def test_worker_classifies_material_content_and_stores_candidates() -> None:
     with app.state.database.session() as db:
         from app.models import MaterialClassificationCandidate
 
-        categories = {
-            row.category
-            for row in db.query(MaterialClassificationCandidate).all()
-        }
+        categories = {row.category for row in db.query(MaterialClassificationCandidate).all()}
         assert "loan_application" in categories
         steps = {step.name: step.status for step in db.get(DocumentJob, job.id).steps}
         assert steps["classification"] == "success"
@@ -410,9 +407,7 @@ def test_worker_parses_structured_xlsx_without_image_engine() -> None:
             application_id=application.id,
             filename="statement.xlsx",
             extension=".xlsx",
-            declared_mime=(
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            ),
+            declared_mime=("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
             size_bytes=len(content),
             sha256="e" * 64,
             object_key="statement",

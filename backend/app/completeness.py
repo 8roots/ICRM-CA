@@ -440,17 +440,11 @@ def condition_context(db: Session, application_id: str) -> dict[str, bool]:
 
 
 def confirmed_category_by_document(db: Session, application_id: str) -> dict[str, str]:
-    rows = (
-        db.query(ClassificationConfirmation)
-        .filter_by(application_id=application_id)
-        .all()
-    )
+    rows = db.query(ClassificationConfirmation).filter_by(application_id=application_id).all()
     return {row.document_id: row.category for row in rows}
 
 
-def classification_candidates_by_document(
-    db: Session, application_id: str
-) -> dict[str, set[str]]:
+def classification_candidates_by_document(db: Session, application_id: str) -> dict[str, set[str]]:
     rows = (
         db.query(MaterialClassificationCandidate, Document.id)
         .join(Document, MaterialClassificationCandidate.document_id == Document.id)
@@ -678,23 +672,23 @@ def render_printable_html(run: CompletenessRun, actor_username: str) -> str:
     rows = "".join(
         f"""
         <tr>
-          <td>{_esc(item['item_code'])}</td>
-          <td>{_esc(item['label'])}</td>
-          <td>{_esc(item['category'])}</td>
-          <td class="state">{_esc(STATE_LABELS.get(ItemState(item['state']), item['state']))}</td>
-          <td>{_esc(item['reason'])}</td>
+          <td>{_esc(item["item_code"])}</td>
+          <td>{_esc(item["label"])}</td>
+          <td>{_esc(item["category"])}</td>
+          <td class="state">{_esc(STATE_LABELS.get(ItemState(item["state"]), item["state"]))}</td>
+          <td>{_esc(item["reason"])}</td>
         </tr>"""
         for item in result["items"]
     )
     document_rows = "".join(
         f"""
         <li>
-          <a href="/documents/{_esc(document['document_id'])}/evidence">
-            {_esc(document['filename'])}
+          <a href="/documents/{_esc(document["document_id"])}/evidence">
+            {_esc(document["filename"])}
           </a>
-          （分类：{_esc(document.get('confirmed_category') or '未确认')}
-          · 印章：{'已确认' if document.get('seal_confirmed') else '未确认'}
-          · 签字：{'已确认' if document.get('signature_confirmed') else '未确认'}）
+          （分类：{_esc(document.get("confirmed_category") or "未确认")}
+          · 印章：{"已确认" if document.get("seal_confirmed") else "未确认"}
+          · 签字：{"已确认" if document.get("signature_confirmed") else "未确认"}）
         </li>"""
         for document in input_snapshot.get("documents", [])
     )
@@ -714,7 +708,7 @@ def render_printable_html(run: CompletenessRun, actor_username: str) -> str:
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>材料完备性正式报告 - {_esc(input_snapshot['application']['borrower_name'])}</title>
+<title>材料完备性正式报告 - {_esc(input_snapshot["application"]["borrower_name"])}</title>
 <style>
   body {{ font-family: "PingFang SC", "Microsoft YaHei", sans-serif; margin: 24px; color: #222; }}
   h1 {{ font-size: 20px; }}
@@ -735,9 +729,9 @@ def render_printable_html(run: CompletenessRun, actor_username: str) -> str:
   </p>
   <h2>模板</h2>
   <p>
-    模板：{_esc(template['name'])}（{_esc(template['code'])} · 版本 v{_esc(template['version'])}）
-    · 产品：{_esc(template['product'])} · 主借款人类型：{_esc(template['borrower_type'])}
-    · 演示模板：{'是' if template.get('demo_only') else '否'}
+    模板：{_esc(template["name"])}（{_esc(template["code"])} · 版本 v{_esc(template["version"])}）
+    · 产品：{_esc(template["product"])} · 主借款人类型：{_esc(template["borrower_type"])}
+    · 演示模板：{"是" if template.get("demo_only") else "否"}
   </p>
   <h2>清单结果</h2>
   <table>
@@ -745,11 +739,11 @@ def render_printable_html(run: CompletenessRun, actor_username: str) -> str:
     <tbody>{rows}</tbody>
   </table>
   <h2>缺件与待确认</h2>
-  <ul>{gap_rows or '<li>无</li>'}</ul>
+  <ul>{gap_rows or "<li>无</li>"}</ul>
   <h2>人工豁免</h2>
-  <ul>{waiver_rows or '<li>无</li>'}</ul>
+  <ul>{waiver_rows or "<li>无</li>"}</ul>
   <h2>输入材料与证据</h2>
-  <ul>{document_rows or '<li>无</li>'}</ul>
+  <ul>{document_rows or "<li>无</li>"}</ul>
   <p class="muted">
     输入快照与结果快照的完整 JSON 可通过 API 获取；映射或模板版本变化会使本报告失效。
   </p>

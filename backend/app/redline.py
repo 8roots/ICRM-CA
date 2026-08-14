@@ -961,9 +961,7 @@ def build_run_snapshots(
         "evaluation_date": evaluation_date.isoformat(),
         "lpr": {
             "entry_id": lpr_entry.id if hasattr(lpr_entry, "id") else None,
-            "effective_date": (
-                lpr_entry.effective_date.isoformat() if lpr_entry else None
-            ),
+            "effective_date": (lpr_entry.effective_date.isoformat() if lpr_entry else None),
             "value": lpr_entry.value if lpr_entry else None,
             "provisional": result.lpr_provisional,
             "as_of_date": result.lpr_as_of_date.isoformat(),
@@ -1142,9 +1140,7 @@ def seed_demo_data(db: Session) -> None:
     demo_codes = [spec["code"] for spec in DEMO_RULES]
     # Any existing row with a demo code (draft or otherwise) means the demo
     # data was already customised in this database; never collide on version 1.
-    existing_rule = (
-        db.query(RulePackage).filter(RulePackage.code.in_(demo_codes)).first()
-    )
+    existing_rule = db.query(RulePackage).filter(RulePackage.code.in_(demo_codes)).first()
     if existing_rule is None:
         from app.config import settings
 

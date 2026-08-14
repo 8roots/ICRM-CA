@@ -74,13 +74,18 @@ docker compose -f docker-compose.prod.yml up --build -d
 ```bash
 cd backend
 uv sync --frozen
+uv run ruff format --check app tests alembic scripts
 uv run ruff check app tests alembic scripts
 uv run pytest
 uv run python scripts/export_openapi.py
-uv run python scripts/evaluate_extraction.py
+uv run python scripts/evaluate_extraction.py --check-drift
 ```
 
-`scripts/evaluate_extraction.py` 对黄金集材料运行本地抽取并报告逐字段召回率/准确率（阈值：召回率 ≥ 0.9、准确率 ≥ 0.95），未达标时以非零码退出。
+- `scripts/evaluate_extraction.py` 对黄金集材料（md/docx/xlsx/csv/pdf + 扫描版）运行抽取并报告逐字段召回率/准确率（阈值：召回率 ≥ 0.9、准确率 ≥ 0.95），未达标时以非零码退出；`--check-drift` 校验已提交的 `docs/release/golden-report.md` 未过期；`--engine ocr` 使用固定 PaddleOCR 模型（`ICRM_MODELS_DIR`）。
+- `scripts/generate_golden_fixtures.py` 从 `tests/fixtures/golden_*.md` 复现全部格式语料。
+- `scripts/benchmark_200p.py` 生成 200 页参考 PDF 并测量 P95，结果写入 `docs/release/benchmark-200p.md`。
+- `scripts/seed_e2e.py` 为 CI/端到端从全新克隆创建管理员与审批人员（凭据来自环境变量）。
+- CI 账号创建也可用 `icrm-create-admin --password-stdin`（无交互）。
 
 数据库迁移：
 
@@ -111,3 +116,28 @@ npm audit --audit-level=high
 ```bash
 git diff --exit-code -- backend/openapi.json frontend/src/api/generated.ts
 ```
+
+## CI 与发布
+
+- `.github/workflows/ci.yml`：后端格式化/静态/单元/集成测试、前端类型/Vitest/构建、OpenAPI 与黄金报告漂移、`pip-audit`/`npm audit` 漏洞扫描、Compose 冒烟、Playwright 端到端（含企业/个人演示流）。CI 账号由脚本按运行生成，无隐藏状态。
+- `.github/workflows/release-golden.yml`：固定 PaddleOCR 模型黄金套件发布任务；模型/依赖/规则变更必须同步重跑 `docs/release/golden-report-ocr.md`，否则任务失败。
+- 发布前检查清单：`docs/ops/release-check.md`。
+- 工程完成报告与试点就绪门禁：`docs/release/engineering-complete.md`。
+
+## 运维文档
+
+`docs/ops/`：部署（`deployment.md`）、初始化与首个管理员（`initialization.md`）、安全职责（`security.md`）、故障排查（`troubleshooting.md`）、模型升级（`model-upgrade.md`）、备份恢复（`backup-restore.md`）。
+
+## 备份与恢复（RPO 24h / RTO 4h）
+
+```bash
+# 加密备份（PostgreSQL + MinIO + 已发布配置，SHA-256 清单）
+scripts/backup.sh --compose docker-compose.prod.yml \
+  --target /mnt/backup-disk/icrm --passphrase-file /root/.backup-pass --verify
+
+# 恢复（非生产演练或明确的灾难恢复需 --force）
+scripts/restore.sh --backup /mnt/backup-disk/icrm/<时间戳>-icrm-backup \
+  --compose docker-compose.prod.yml --passphrase-file /root/.backup-pass --force
+```
+
+恢复演练流程与验收标准见 `docs/ops/backup-restore.md`。

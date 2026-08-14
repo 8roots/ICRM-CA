@@ -73,7 +73,9 @@ PARAGRAPH_RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "uscc",
-        re.compile(r"(?:统一社会信用代码|信用代码|社会信用代码)\s*[:：]?\s*([0-9A-HJ-NPQRTUWXY]{18})"),
+        re.compile(
+            r"(?:统一社会信用代码|信用代码|社会信用代码)\s*[:：]?\s*([0-9A-HJ-NPQRTUWXY]{18})"
+        ),
         0.97,
         SubjectRole.PRIMARY_BORROWER,
     ),
@@ -138,13 +140,17 @@ PARAGRAPH_RULES: tuple[Rule, ...] = (
     ),
     Rule(
         "repayment_method",
-        re.compile(r"还款方式\s*[:：]\s*(等额本息|等额本金|先息后本|一次性还本付息|按月付息到期还本|利随本清)"),
+        re.compile(
+            r"还款方式\s*[:：]\s*(等额本息|等额本金|先息后本|一次性还本付息|按月付息到期还本|利随本清)"
+        ),
         0.92,
         SubjectRole.PRIMARY_BORROWER,
     ),
     Rule(
         "interest_method",
-        re.compile(r"计息方式\s*[:：]\s*(按月计息|按季计息|按年计息|到期一次还本付息|利随本清|按月付息)"),
+        re.compile(
+            r"计息方式\s*[:：]\s*(按月计息|按季计息|按年计息|到期一次还本付息|利随本清|按月付息)"
+        ),
         0.88,
         SubjectRole.PRIMARY_BORROWER,
     ),
@@ -258,6 +264,9 @@ KEY_VALUE_LABELS: dict[str, tuple[str, Callable[[str], TypedValue | None], float
     "权证号": ("collateral_certificate", normalize_text, 0.85),
     "不动产权证号": ("collateral_certificate", normalize_text, 0.85),
     "计息方式": ("interest_method", normalize_text, 0.88),
+    "必要费用": ("loan_fees", normalize_text, 0.8),
+    "各项费用": ("loan_fees", normalize_text, 0.8),
+    "贷款费用": ("loan_fees", normalize_text, 0.8),
     "婚姻状况": ("marital_status", normalize_text, 0.92),
     "股东": ("shareholder", normalize_text, 0.85),
     "查询次数": ("credit_query_count", lambda t: normalize_integer(t), 0.8),
@@ -276,7 +285,8 @@ LABEL_RE = re.compile(
     r"^\s*(统一社会信用代码|信用代码|身份证号|证件号码|身份证号码|法定代表人|注册资本|公司名称|企业名称"
     r"|姓名|借款人|贷款金额|借款金额|申请金额|年利率|月利率|名义利率|执行利率|贷款利率|贷款期限|借款期限"
     r"|还款方式|计息方式|贷款用途|借款用途|拟签约日期|报告日期|评估价值|评估值|抵押物|权证号|不动产权证号"
-    r"|保证人|担保人|保证方式|授信额度|授信总额|负债余额|贷款余额|逾期金额|当前逾期|查询次数|婚姻状况|股东)"
+    r"|保证人|担保人|保证方式|授信额度|授信总额|负债余额|贷款余额|逾期金额|当前逾期|查询次数|婚姻状况|股东"
+    r"|必要费用|各项费用|贷款费用)"
     r"\s*[:：]?\s*$"
 )
 

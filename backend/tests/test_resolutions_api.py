@@ -131,20 +131,14 @@ def test_candidates_and_resolutions_have_no_update_or_delete_endpoints(client) -
         csrf = login(client, "owner")
         app_id = client.app.state.test_application_id
         candidate_id = client.app.state.test_candidate_id
-        assert (
-            client.put(
-                f"/api/v1/applications/{app_id}/candidates/{candidate_id}",
-                headers=csrf,
-                json={"value": "篡改"},
-            ).status_code
-            in (404, 405)
-        )
-        assert (
-            client.delete(
-                f"/api/v1/applications/{app_id}/candidates/{candidate_id}", headers=csrf
-            ).status_code
-            in (404, 405)
-        )
+        assert client.put(
+            f"/api/v1/applications/{app_id}/candidates/{candidate_id}",
+            headers=csrf,
+            json={"value": "篡改"},
+        ).status_code in (404, 405)
+        assert client.delete(
+            f"/api/v1/applications/{app_id}/candidates/{candidate_id}", headers=csrf
+        ).status_code in (404, 405)
         resolution = client.post(
             f"/api/v1/applications/{app_id}/resolutions",
             headers={**csrf, "Idempotency-Key": "sel-1"},
@@ -156,12 +150,9 @@ def test_candidates_and_resolutions_have_no_update_or_delete_endpoints(client) -
         )
         assert resolution.status_code == 201
         resolution_id = resolution.json()["id"]
-        assert (
-            client.delete(
-                f"/api/v1/applications/{app_id}/resolutions/{resolution_id}", headers=csrf
-            ).status_code
-            in (404, 405)
-        )
+        assert client.delete(
+            f"/api/v1/applications/{app_id}/resolutions/{resolution_id}", headers=csrf
+        ).status_code in (404, 405)
 
 
 def test_selected_resolution_copies_the_immutable_candidate(client) -> None:

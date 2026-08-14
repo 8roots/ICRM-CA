@@ -270,9 +270,7 @@ def test_rule_content_hash_is_stable_across_lifecycle(client: TestClient) -> Non
     from app.redline import rule_content_hash, rule_content_payload
 
     csrf = login(client, "admin", "administrator password")
-    created = client.post(
-        "/api/v1/admin/rule-packages", headers=csrf, json=RULE_PAYLOAD
-    )
+    created = client.post("/api/v1/admin/rule-packages", headers=csrf, json=RULE_PAYLOAD)
     assert created.status_code == 201
     draft_hash = created.json()["content_hash"]
     approved = client.post(
@@ -915,9 +913,7 @@ def test_production_rejects_demo_reference_in_formal_report() -> None:
     client = setup(production=True)
     with client:
         csrf = login(client, "admin", "administrator password")
-        primary = client.post(
-            "/api/v1/admin/rule-packages", headers=csrf, json=RULE_PAYLOAD
-        )
+        primary = client.post("/api/v1/admin/rule-packages", headers=csrf, json=RULE_PAYLOAD)
         assert primary.status_code == 201
         assert (
             client.post(
@@ -1157,9 +1153,7 @@ def test_printable_report_marks_stale_runs(client: TestClient) -> None:
         headers={**csrf, "Idempotency-Key": "ctx-change"},
         json={"context": "某省"},
     )
-    printable = client.get(
-        f"/api/v1/applications/{application_id}/redline-runs/{run_id}/printable"
-    )
+    printable = client.get(f"/api/v1/applications/{application_id}/redline-runs/{run_id}/printable")
     assert printable.status_code == 200
     assert "已失效" in printable.text
     assert "rule_context_change" in printable.text

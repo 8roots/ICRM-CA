@@ -95,16 +95,8 @@ def test_demo_specs_are_well_formed() -> None:
 
 
 def test_conditions_and_items_cover_each_other() -> None:
-    conditional = {
-        item.code
-        for _, item in all_demo_items()
-        if item.condition
-    }
-    unconditional = {
-        item.code
-        for _, item in all_demo_items()
-        if not item.condition
-    }
+    conditional = {item.code for _, item in all_demo_items() if item.condition}
+    unconditional = {item.code for _, item in all_demo_items() if not item.condition}
     assert conditional and unconditional
     assert conditional & unconditional == set()
 
@@ -113,9 +105,7 @@ def test_no_evidence_yields_missing_or_not_applicable() -> None:
     for template_code in (DEMO_CORP_OPERATING, DEMO_INDIVIDUAL_OPERATING):
         states = run(items_for(template_code))
         for item in items_for(template_code):
-            expected = (
-                ItemState.NOT_APPLICABLE if item.condition else ItemState.MISSING
-            )
+            expected = ItemState.NOT_APPLICABLE if item.condition else ItemState.MISSING
             assert states[item.code] == expected, (template_code, item.code)
 
 

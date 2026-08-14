@@ -10,3 +10,4 @@ frontend/dist/
 frontend/test-results/
 *.tsbuildinfo
 .DS_Store
+frontend/.playwright-results/

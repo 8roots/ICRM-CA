@@ -123,9 +123,7 @@ def classify_text(text: str) -> list[tuple[MaterialCategory, float]]:
     best = max(hits for _, hits in scored)
     ranked = sorted(scored, key=lambda pair: (-pair[1], pair[0].value))
     candidates = [
-        (category, hits / best)
-        for category, hits in ranked
-        if hits / best >= MIN_CONFIDENCE
+        (category, hits / best) for category, hits in ranked if hits / best >= MIN_CONFIDENCE
     ]
     return candidates[:MAX_CANDIDATES_PER_DOCUMENT]
 

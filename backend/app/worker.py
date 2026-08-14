@@ -184,9 +184,7 @@ def run() -> None:
         cloud_confirmed=settings.cloud_confirmed,
     )
     if not settings.cloud_ready:
-        logger.info(
-            "cloud extraction disabled blockers=%s", ",".join(settings.cloud_gate_blockers)
-        )
+        logger.info("cloud extraction disabled blockers=%s", ",".join(settings.cloud_gate_blockers))
     while True:
         worked = process_one(database, objects, worker_id, image_engine, cloud_client)
         with database.session() as db:

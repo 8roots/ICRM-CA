@@ -417,9 +417,7 @@ def test_other_officer_cannot_touch_application(client: TestClient) -> None:
     login(client, "owner")
     csrf_other = login(client, "other")
     application_id = owner_application_id(client)
-    assert (
-        client.get(f"/api/v1/applications/{application_id}").status_code == 404
-    )
+    assert client.get(f"/api/v1/applications/{application_id}").status_code == 404
     complete = client.post(
         f"/api/v1/applications/{application_id}/complete",
         headers={**csrf_other, "Idempotency-Key": "complete-1"},

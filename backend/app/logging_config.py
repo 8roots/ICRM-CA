@@ -66,9 +66,7 @@ class CorrelationMiddleware:
             if message["type"] == "http.response.start":
                 status_code = message["status"]
                 headers = message.get("headers") or []
-                headers.append(
-                    (b"x-correlation-id", correlation_id.encode("ascii"))
-                )
+                headers.append((b"x-correlation-id", correlation_id.encode("ascii")))
                 message["headers"] = headers
             await send(message)
 
