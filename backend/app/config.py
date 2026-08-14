@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     minio_secret_key: str = "local-minio-password"
     minio_bucket: str = "materials"
     models_dir: str = "/app/models"
+    lender_qualification: str = "small_loan_company"
     max_material_bytes: int = 200 * 1024 * 1024
     max_application_bytes: int = 2 * 1024 * 1024 * 1024
     max_application_materials: int = 100

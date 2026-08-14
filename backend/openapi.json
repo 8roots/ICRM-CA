@@ -162,6 +162,59 @@
         }
       }
     },
+    "/api/v1/meta/fields": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "List Fields",
+        "operationId": "list_fields_api_v1_meta_fields_get",
+        "parameters": [
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FieldMetaResponse"
+                  },
+                  "title": "Response List Fields Api V1 Meta Fields Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/users": {
       "get": {
         "tags": [
@@ -899,6 +952,750 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/rule-packages": {
+      "get": {
+        "tags": [
+          "admin-rules"
+        ],
+        "summary": "List Rule Packages",
+        "operationId": "list_rule_packages_api_v1_admin_rule_packages_get",
+        "parameters": [
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RulePackageResponse"
+                  },
+                  "title": "Response List Rule Packages Api V1 Admin Rule Packages Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin-rules"
+        ],
+        "summary": "Create Rule Package",
+        "operationId": "create_rule_package_api_v1_admin_rule_packages_post",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          },
+          {
+            "name": "icrm_csrf",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RulePackageInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePackageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/rule-packages/{rule_id}": {
+      "put": {
+        "tags": [
+          "admin-rules"
+        ],
+        "summary": "Update Rule Package",
+        "operationId": "update_rule_package_api_v1_admin_rule_packages__rule_id__put",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          },
+          {
+            "name": "icrm_csrf",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRulePackageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePackageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/rule-packages/{rule_id}/approve": {
+      "post": {
+        "tags": [
+          "admin-rules"
+        ],
+        "summary": "Approve Rule Package",
+        "operationId": "approve_rule_package_api_v1_admin_rule_packages__rule_id__approve_post",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          },
+          {
+            "name": "icrm_csrf",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Csrf"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePackageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/rule-packages/{rule_id}/copy": {
+      "post": {
+        "tags": [
+          "admin-rules"
+        ],
+        "summary": "Copy Rule Package",
+        "operationId": "copy_rule_package_api_v1_admin_rule_packages__rule_id__copy_post",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          },
+          {
+            "name": "icrm_csrf",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Csrf"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePackageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/rule-packages/{rule_id}/retire": {
+      "post": {
+        "tags": [
+          "admin-rules"
+        ],
+        "summary": "Retire Rule Package",
+        "operationId": "retire_rule_package_api_v1_admin_rule_packages__rule_id__retire_post",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          },
+          {
+            "name": "icrm_csrf",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Csrf"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePackageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/lpr-imports": {
+      "get": {
+        "tags": [
+          "admin-rules"
+        ],
+        "summary": "List Lpr Imports",
+        "operationId": "list_lpr_imports_api_v1_admin_lpr_imports_get",
+        "parameters": [
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LprImportResponse"
+                  },
+                  "title": "Response List Lpr Imports Api V1 Admin Lpr Imports Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin-rules"
+        ],
+        "summary": "Import Lpr Csv",
+        "operationId": "import_lpr_csv_api_v1_admin_lpr_imports_post",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          },
+          {
+            "name": "icrm_csrf",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_lpr_csv_api_v1_admin_lpr_imports_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LprImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/lpr-imports/{import_id}/publish": {
+      "post": {
+        "tags": [
+          "admin-rules"
+        ],
+        "summary": "Publish Lpr Import",
+        "operationId": "publish_lpr_import_api_v1_admin_lpr_imports__import_id__publish_post",
+        "parameters": [
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Import Id"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          },
+          {
+            "name": "icrm_csrf",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Csrf"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LprImportResponse"
                 }
               }
             }
@@ -2794,7 +3591,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RunDetailResponse"
+                  "$ref": "#/components/schemas/app__completeness_api__RunDetailResponse"
                 }
               }
             }
@@ -2852,7 +3649,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/RunSummaryResponse"
+                    "$ref": "#/components/schemas/app__completeness_api__RunSummaryResponse"
                   },
                   "title": "Response List Completeness Runs Api V1 Applications  Application Id  Completeness Runs Get"
                 }
@@ -2921,7 +3718,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RunDetailResponse"
+                  "$ref": "#/components/schemas/app__completeness_api__RunDetailResponse"
                 }
               }
             }
@@ -2946,6 +3743,468 @@
         ],
         "summary": "Printable Completeness Run",
         "operationId": "printable_completeness_run_api_v1_applications__application_id__completeness_runs__run_id__printable_get",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/applications/{application_id}/redline": {
+      "get": {
+        "tags": [
+          "redline"
+        ],
+        "summary": "Get Redline",
+        "operationId": "get_redline_api_v1_applications__application_id__redline_get",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveRedlineResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/applications/{application_id}/rule-context": {
+      "post": {
+        "tags": [
+          "redline"
+        ],
+        "summary": "Confirm Rule Context",
+        "operationId": "confirm_rule_context_api_v1_applications__application_id__rule_context_post",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          },
+          {
+            "name": "icrm_csrf",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleContextConfirmRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleContextResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/applications/{application_id}/redline-runs": {
+      "post": {
+        "tags": [
+          "redline"
+        ],
+        "summary": "Create Redline Run",
+        "operationId": "create_redline_run_api_v1_applications__application_id__redline_runs_post",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          },
+          {
+            "name": "icrm_csrf",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Csrf"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__redline_api__RunDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "redline"
+        ],
+        "summary": "List Redline Runs",
+        "operationId": "list_redline_runs_api_v1_applications__application_id__redline_runs_get",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/app__redline_api__RunSummaryResponse"
+                  },
+                  "title": "Response List Redline Runs Api V1 Applications  Application Id  Redline Runs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/applications/{application_id}/redline-runs/{run_id}": {
+      "get": {
+        "tags": [
+          "redline"
+        ],
+        "summary": "Get Redline Run",
+        "operationId": "get_redline_run_api_v1_applications__application_id__redline_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "icrm_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Icrm Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__redline_api__RunDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/applications/{application_id}/redline-runs/{run_id}/printable": {
+      "get": {
+        "tags": [
+          "redline"
+        ],
+        "summary": "Printable Redline Run",
+        "operationId": "printable_redline_run_api_v1_applications__application_id__redline_runs__run_id__printable_get",
         "parameters": [
           {
             "name": "application_id",
@@ -3246,6 +4505,25 @@
           "locator"
         ],
         "title": "BlockResponse"
+      },
+      "Body_import_lpr_csv_api_v1_admin_lpr_imports_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          },
+          "source_authority": {
+            "type": "string",
+            "title": "Source Authority"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "source_authority"
+        ],
+        "title": "Body_import_lpr_csv_api_v1_admin_lpr_imports_post"
       },
       "Body_upload_document_api_v1_applications__application_id__documents_post": {
         "properties": {
@@ -3905,6 +5183,52 @@
         ],
         "title": "DocumentResponse"
       },
+      "EvaluationResponse": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "state_label": {
+            "type": "string",
+            "title": "State Label"
+          },
+          "steps": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Steps"
+          },
+          "metrics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metrics"
+          },
+          "missing_inputs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Inputs"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "state_label",
+          "steps",
+          "metrics",
+          "missing_inputs",
+          "reason"
+        ],
+        "title": "EvaluationResponse"
+      },
       "EvidenceReviewRequest": {
         "properties": {
           "kind": {
@@ -4006,6 +5330,39 @@
           "created_at"
         ],
         "title": "EvidenceReviewResponse"
+      },
+      "FieldMetaResponse": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "group": {
+            "type": "string",
+            "title": "Group"
+          },
+          "group_label": {
+            "type": "string",
+            "title": "Group Label"
+          },
+          "critical": {
+            "type": "boolean",
+            "title": "Critical"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "group",
+          "group_label",
+          "critical"
+        ],
+        "title": "FieldMetaResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -4143,7 +5500,7 @@
           "latest_run": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/RunSummaryResponse"
+                "$ref": "#/components/schemas/app__completeness_api__RunSummaryResponse"
               },
               {
                 "type": "null"
@@ -4176,6 +5533,98 @@
         ],
         "title": "LiveDraftResponse"
       },
+      "LiveRedlineResponse": {
+        "properties": {
+          "rule_context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Context"
+          },
+          "selection": {
+            "$ref": "#/components/schemas/SelectionResponse"
+          },
+          "references": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "References"
+          },
+          "lpr": {
+            "$ref": "#/components/schemas/LprInfoResponse"
+          },
+          "evaluation_date": {
+            "type": "string",
+            "title": "Evaluation Date"
+          },
+          "critical": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Critical"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "state_label": {
+            "type": "string",
+            "title": "State Label"
+          },
+          "primary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvaluationResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latest_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__redline_api__RunSummaryResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "formal_run_blocked_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formal Run Blocked Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rule_context",
+          "selection",
+          "references",
+          "lpr",
+          "evaluation_date",
+          "critical",
+          "state",
+          "state_label",
+          "primary",
+          "latest_run",
+          "formal_run_blocked_reason"
+        ],
+        "title": "LiveRedlineResponse"
+      },
       "LoginRequest": {
         "properties": {
           "username": {
@@ -4197,6 +5646,172 @@
           "password"
         ],
         "title": "LoginRequest"
+      },
+      "LprEntryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "effective_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Effective Date"
+          },
+          "tenor": {
+            "type": "string",
+            "title": "Tenor"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "publication_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Publication Date"
+          },
+          "source_url": {
+            "type": "string",
+            "title": "Source Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "effective_date",
+          "tenor",
+          "value",
+          "publication_date",
+          "source_url"
+        ],
+        "title": "LprEntryResponse"
+      },
+      "LprImportResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "source_authority": {
+            "type": "string",
+            "title": "Source Authority"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "demo_only": {
+            "type": "boolean",
+            "title": "Demo Only"
+          },
+          "row_count": {
+            "type": "integer",
+            "title": "Row Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/LprEntryResponse"
+            },
+            "type": "array",
+            "title": "Entries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "filename",
+          "source_authority",
+          "status",
+          "demo_only",
+          "row_count",
+          "created_at",
+          "published_at",
+          "entries"
+        ],
+        "title": "LprImportResponse"
+      },
+      "LprInfoResponse": {
+        "properties": {
+          "entry_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Id"
+          },
+          "effective_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Date"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "provisional": {
+            "type": "boolean",
+            "title": "Provisional"
+          },
+          "as_of_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entry_id",
+          "effective_date",
+          "value",
+          "provisional",
+          "as_of_date"
+        ],
+        "title": "LprInfoResponse"
       },
       "ManagedUserResponse": {
         "properties": {
@@ -4642,53 +6257,31 @@
         ],
         "title": "RetryRequest"
       },
-      "RunDetailResponse": {
+      "RuleContextConfirmRequest": {
         "properties": {
-          "id": {
+          "context": {
             "type": "string",
-            "title": "Id"
-          },
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Context"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "context"
+        ],
+        "title": "RuleContextConfirmRequest"
+      },
+      "RuleContextResponse": {
+        "properties": {
           "application_id": {
             "type": "string",
             "title": "Application Id"
           },
-          "template_snapshot": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Template Snapshot"
-          },
-          "input_snapshot": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Input Snapshot"
-          },
-          "result_snapshot": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Result Snapshot"
-          },
-          "content_hash": {
+          "context": {
             "type": "string",
-            "title": "Content Hash"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "stale": {
-            "type": "boolean",
-            "title": "Stale"
-          },
-          "stale_reason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Stale Reason"
+            "title": "Context"
           },
           "actor_id": {
             "type": "string",
@@ -4702,80 +6295,379 @@
         },
         "type": "object",
         "required": [
-          "id",
           "application_id",
-          "template_snapshot",
-          "input_snapshot",
-          "result_snapshot",
-          "content_hash",
-          "status",
-          "stale",
-          "stale_reason",
+          "context",
           "actor_id",
           "created_at"
         ],
-        "title": "RunDetailResponse"
+        "title": "RuleContextResponse"
       },
-      "RunSummaryResponse": {
+      "RulePackageInput": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "pattern": "^[A-Z0-9][A-Z0-9_-]*$",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "pattern": "^(hard|reference)$",
+            "title": "Kind"
+          },
+          "lender_qualification": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Lender Qualification"
+          },
+          "rule_context": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Rule Context"
+          },
+          "product": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Product"
+          },
+          "effective_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Effective From"
+          },
+          "effective_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Until"
+          },
+          "calc_type": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Calc Type"
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params"
+          },
+          "legal_basis": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 1,
+            "title": "Legal Basis"
+          },
+          "reviewer": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Reviewer"
+          },
+          "reviewed_at": {
+            "type": "string",
+            "format": "date",
+            "title": "Reviewed At"
+          },
+          "demo_only": {
+            "type": "boolean",
+            "title": "Demo Only",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "kind",
+          "lender_qualification",
+          "rule_context",
+          "product",
+          "effective_from",
+          "calc_type",
+          "params",
+          "legal_basis",
+          "reviewer",
+          "reviewed_at"
+        ],
+        "title": "RulePackageInput"
+      },
+      "RulePackageResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "created_at": {
+          "code": {
             "type": "string",
-            "format": "date-time",
-            "title": "Created At"
+            "title": "Code"
           },
-          "status": {
+          "name": {
             "type": "string",
-            "title": "Status"
+            "title": "Name"
           },
-          "stale": {
-            "type": "boolean",
-            "title": "Stale"
+          "kind": {
+            "type": "string",
+            "title": "Kind"
           },
-          "stale_reason": {
+          "lender_qualification": {
+            "type": "string",
+            "title": "Lender Qualification"
+          },
+          "rule_context": {
+            "type": "string",
+            "title": "Rule Context"
+          },
+          "product": {
+            "type": "string",
+            "title": "Product"
+          },
+          "effective_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Effective From"
+          },
+          "effective_until": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Stale Reason"
+            "title": "Effective Until"
+          },
+          "calc_type": {
+            "type": "string",
+            "title": "Calc Type"
+          },
+          "calc_type_label": {
+            "type": "string",
+            "title": "Calc Type Label"
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params"
+          },
+          "legal_basis": {
+            "type": "string",
+            "title": "Legal Basis"
+          },
+          "reviewer": {
+            "type": "string",
+            "title": "Reviewer"
+          },
+          "reviewed_at": {
+            "type": "string",
+            "format": "date",
+            "title": "Reviewed At"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "demo_only": {
+            "type": "boolean",
+            "title": "Demo Only"
           },
           "content_hash": {
             "type": "string",
             "title": "Content Hash"
           },
-          "template_code": {
-            "type": "string",
-            "title": "Template Code"
+          "approved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
           },
-          "template_version": {
-            "type": "integer",
-            "title": "Template Version"
+          "retired_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retired At"
           },
-          "actor_id": {
+          "created_at": {
             "type": "string",
-            "title": "Actor Id"
+            "format": "date-time",
+            "title": "Created At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "created_at",
+          "code",
+          "name",
+          "kind",
+          "lender_qualification",
+          "rule_context",
+          "product",
+          "effective_from",
+          "effective_until",
+          "calc_type",
+          "calc_type_label",
+          "params",
+          "legal_basis",
+          "reviewer",
+          "reviewed_at",
+          "version",
           "status",
-          "stale",
-          "stale_reason",
+          "demo_only",
           "content_hash",
-          "template_code",
-          "template_version",
-          "actor_id"
+          "approved_at",
+          "retired_at",
+          "created_at"
         ],
-        "title": "RunSummaryResponse"
+        "title": "RulePackageResponse"
+      },
+      "RuleResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "lender_qualification": {
+            "type": "string",
+            "title": "Lender Qualification"
+          },
+          "rule_context": {
+            "type": "string",
+            "title": "Rule Context"
+          },
+          "product": {
+            "type": "string",
+            "title": "Product"
+          },
+          "effective_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Effective From"
+          },
+          "effective_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Until"
+          },
+          "calc_type": {
+            "type": "string",
+            "title": "Calc Type"
+          },
+          "calc_type_label": {
+            "type": "string",
+            "title": "Calc Type Label"
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params"
+          },
+          "legal_basis": {
+            "type": "string",
+            "title": "Legal Basis"
+          },
+          "reviewer": {
+            "type": "string",
+            "title": "Reviewer"
+          },
+          "reviewed_at": {
+            "type": "string",
+            "format": "date",
+            "title": "Reviewed At"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "demo_only": {
+            "type": "boolean",
+            "title": "Demo Only"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "kind",
+          "lender_qualification",
+          "rule_context",
+          "product",
+          "effective_from",
+          "effective_until",
+          "calc_type",
+          "calc_type_label",
+          "params",
+          "legal_basis",
+          "reviewer",
+          "reviewed_at",
+          "version",
+          "status",
+          "demo_only",
+          "content_hash"
+        ],
+        "title": "RuleResponse"
       },
       "SealCandidateResponse": {
         "properties": {
@@ -4825,6 +6717,43 @@
           "model_version"
         ],
         "title": "SealCandidateResponse"
+      },
+      "SelectionResponse": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "rule": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuleResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/RuleResponse"
+            },
+            "type": "array",
+            "title": "Candidates"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason",
+          "rule",
+          "candidates",
+          "explanation"
+        ],
+        "title": "SelectionResponse"
       },
       "SourceRefResponse": {
         "properties": {
@@ -5215,6 +7144,67 @@
         ],
         "title": "UpdateApplicationRequest"
       },
+      "UpdateRulePackageRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "effective_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Effective From"
+          },
+          "effective_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Until"
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params"
+          },
+          "legal_basis": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 1,
+            "title": "Legal Basis"
+          },
+          "reviewer": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Reviewer"
+          },
+          "reviewed_at": {
+            "type": "string",
+            "format": "date",
+            "title": "Reviewed At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "effective_from",
+          "params",
+          "legal_basis",
+          "reviewer",
+          "reviewed_at"
+        ],
+        "title": "UpdateRulePackageRequest",
+        "description": "Draft-only edit; approved/retired versions stay immutable."
+      },
       "UpdateTemplateRequest": {
         "properties": {
           "name": {
@@ -5376,6 +7366,314 @@
           "created_at"
         ],
         "title": "WaiverResponse"
+      },
+      "app__completeness_api__RunDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "application_id": {
+            "type": "string",
+            "title": "Application Id"
+          },
+          "template_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Template Snapshot"
+          },
+          "input_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Input Snapshot"
+          },
+          "result_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Result Snapshot"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          },
+          "stale_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stale Reason"
+          },
+          "actor_id": {
+            "type": "string",
+            "title": "Actor Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "application_id",
+          "template_snapshot",
+          "input_snapshot",
+          "result_snapshot",
+          "content_hash",
+          "status",
+          "stale",
+          "stale_reason",
+          "actor_id",
+          "created_at"
+        ],
+        "title": "RunDetailResponse"
+      },
+      "app__completeness_api__RunSummaryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          },
+          "stale_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stale Reason"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "template_code": {
+            "type": "string",
+            "title": "Template Code"
+          },
+          "template_version": {
+            "type": "integer",
+            "title": "Template Version"
+          },
+          "actor_id": {
+            "type": "string",
+            "title": "Actor Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "status",
+          "stale",
+          "stale_reason",
+          "content_hash",
+          "template_code",
+          "template_version",
+          "actor_id"
+        ],
+        "title": "RunSummaryResponse"
+      },
+      "app__redline_api__RunDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "application_id": {
+            "type": "string",
+            "title": "Application Id"
+          },
+          "rule_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Id"
+          },
+          "rule_snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Snapshot"
+          },
+          "input_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Input Snapshot"
+          },
+          "result_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Result Snapshot"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          },
+          "stale_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stale Reason"
+          },
+          "actor_id": {
+            "type": "string",
+            "title": "Actor Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "application_id",
+          "rule_id",
+          "rule_snapshot",
+          "input_snapshot",
+          "result_snapshot",
+          "content_hash",
+          "status",
+          "stale",
+          "stale_reason",
+          "actor_id",
+          "created_at"
+        ],
+        "title": "RunDetailResponse"
+      },
+      "app__redline_api__RunSummaryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          },
+          "stale_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stale Reason"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "rule_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Code"
+          },
+          "rule_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Version"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "actor_id": {
+            "type": "string",
+            "title": "Actor Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "status",
+          "stale",
+          "stale_reason",
+          "content_hash",
+          "rule_code",
+          "rule_version",
+          "state",
+          "actor_id"
+        ],
+        "title": "RunSummaryResponse"
       }
     }
   }

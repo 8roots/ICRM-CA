@@ -91,6 +91,7 @@ function baseMocks() {
     .mockResolvedValueOnce(Response.json(candidates))
     .mockResolvedValueOnce(Response.json([]))
     .mockResolvedValueOnce(Response.json([]))
+    .mockResolvedValueOnce(Response.json([])) // GET /api/v1/meta/fields
 }
 
 test('候选按置信度降序展示，并标注字段、来源与置信度', async () => {

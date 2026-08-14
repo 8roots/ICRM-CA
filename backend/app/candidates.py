@@ -26,6 +26,7 @@ from app.models import (
     DocumentOutput,
     Resolution,
 )
+from app.redline import mark_runs_stale as mark_redline_runs_stale
 from app.values import normalize_field
 
 router = APIRouter(prefix="/applications", tags=["candidates"])
@@ -107,9 +108,7 @@ class ResolutionRequest(BaseModel):
 
 
 def owned_application(db: Db, application_id: str, owner_id: str) -> Application:
-    application = (
-        db.query(Application).filter_by(id=application_id, owner_id=owner_id).first()
-    )
+    application = db.query(Application).filter_by(id=application_id, owner_id=owner_id).first()
     if not application:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Application not found")
     return application
@@ -131,9 +130,7 @@ def as_source_ref(ref: dict) -> SourceRefResponse:
     )
 
 
-def as_candidate(
-    candidate: CandidateFact, filename: str, output_version: int
-) -> CandidateResponse:
+def as_candidate(candidate: CandidateFact, filename: str, output_version: int) -> CandidateResponse:
     definition = FIELDS.get(candidate.field_key)
     return CandidateResponse(
         id=candidate.id,
@@ -219,9 +216,7 @@ def list_resolutions(application_id: str, db: Db, user: CurrentUser) -> list[Res
     return [as_resolution(resolution) for resolution in resolutions]
 
 
-def _candidate_in_application(
-    db: Db, application_id: str, candidate_id: str
-) -> CandidateFact:
+def _candidate_in_application(db: Db, application_id: str, candidate_id: str) -> CandidateFact:
     candidate = (
         db.query(CandidateFact)
         .join(Document)
@@ -264,9 +259,7 @@ def create_resolution(
     candidate = None
     if payload.resolution_type in {"selected", "corrected"}:
         if not payload.candidate_id:
-            raise HTTPException(
-                status.HTTP_422_UNPROCESSABLE_ENTITY, "candidate_id is required"
-            )
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "candidate_id is required")
         candidate = _candidate_in_application(db, application_id, payload.candidate_id)
         if candidate.field_key != payload.field_key:
             raise HTTPException(
@@ -285,9 +278,7 @@ def create_resolution(
                 "manual resolutions require a reason",
             )
     if payload.resolution_type in {"corrected", "manual"} and not payload.value.strip():
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_ENTITY, "value is required"
-        )
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "value is required")
 
     if payload.resolution_type == "selected":
         typed_value = candidate.typed_value
@@ -304,9 +295,7 @@ def create_resolution(
             default_unit=default_unit,
         )
         if typed is None:
-            raise HTTPException(
-                status.HTTP_422_UNPROCESSABLE_ENTITY, "value cannot be normalized"
-            )
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "value cannot be normalized")
         typed.raw_text = payload.value.strip()
         typed_value = typed.model_dump_stored()
 
@@ -326,12 +315,12 @@ def create_resolution(
     )
     db.add(resolution)
     db.flush()
-    add_idempotency_record(
-        db, user.id, operation, idempotency_key, request_hash, resolution.id
-    )
-    # Resolutions feed completeness condition context (e.g. collateral presence),
-    # so they invalidate any current formal completeness report.
+    add_idempotency_record(db, user.id, operation, idempotency_key, request_hash, resolution.id)
+    # Resolutions feed completeness condition context (e.g. collateral presence)
+    # and are the confirmed inputs for redline evaluation, so they invalidate
+    # any current formal completeness and redline reports.
     mark_runs_stale(db, application_id, "condition_context_change")
+    mark_redline_runs_stale(db, application_id, "critical_input_change")
     db.commit()
     return as_resolution(resolution)
 

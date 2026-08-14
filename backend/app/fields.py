@@ -153,6 +153,16 @@ FIELDS: dict[str, FieldDef] = {
         cloud_extractable=True,
         default_subject=SubjectRole.PRIMARY_BORROWER,
     ),
+    "overdue_interest_rate": FieldDef(
+        "overdue_interest_rate",
+        FieldGroup.PROPOSED_LOAN,
+        "罚息利率",
+        ValueType.RATE,
+        ("罚息利率", "逾期利率", "逾期罚息", "罚息"),
+        critical=True,
+        cloud_extractable=True,
+        default_subject=SubjectRole.PRIMARY_BORROWER,
+    ),
     # 主体身份
     "corporate_name": FieldDef(
         "corporate_name",

@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.dependencies import Csrf, CurrentUser, Db
 from app.models import Application, IdempotencyRecord, User
+from app.redline import mark_runs_stale as mark_redline_runs_stale
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -179,5 +180,8 @@ def update_application(
         if not owned:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Application not found")
         raise HTTPException(status.HTTP_409_CONFLICT, "Stale version")
+    # Product and proposed signing date feed redline rule selection and LPR
+    # timing, so changing them invalidates any current formal redline report.
+    mark_redline_runs_stale(db, application_id, "application_change")
     db.commit()
     return as_response(db.get(Application, application_id))

@@ -27,10 +27,25 @@ const dialogReason = ref('')
 const manualFieldKey = ref('')
 const submitting = ref(false)
 
+interface FieldMeta {
+  key: string
+  label: string
+  group: string
+  group_label: string
+  critical: boolean
+}
+
+const whitelist = ref<FieldMeta[]>([])
+
 const fieldOptions = computed(() => {
   const seen = new Map<string, string>()
   for (const candidate of candidates.value) {
     if (!seen.has(candidate.field_key)) seen.set(candidate.field_key, candidate.field_label)
+  }
+  // manual entry is not limited to fields that produced candidates: the
+  // officer must be able to confirm proposed-loan critical inputs by hand
+  for (const field of whitelist.value) {
+    if (!seen.has(field.key)) seen.set(field.key, field.label)
   }
   return [...seen.entries()].map(([value, label]) => ({ value, label }))
 })
@@ -156,6 +171,11 @@ async function refresh() {
     cloudCalls.value = await request<CloudCallResponse[]>(
       `/api/v1/applications/${applicationId}/cloud-calls`,
     )
+    try {
+      whitelist.value = await request<FieldMeta[]>(`/api/v1/meta/fields`)
+    } catch {
+      whitelist.value = []
+    }
   } finally {
     loading.value = false
   }

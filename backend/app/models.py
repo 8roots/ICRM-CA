@@ -69,6 +69,22 @@ class RunStatus(StrEnum):
     STALE = "stale"
 
 
+class RuleKind(StrEnum):
+    HARD = "hard"
+    REFERENCE = "reference"
+
+
+class RuleStatus(StrEnum):
+    DRAFT = "draft"
+    APPROVED = "approved"
+    RETIRED = "retired"
+
+
+class LprImportStatus(StrEnum):
+    DRAFT = "draft"
+    PUBLISHED = "published"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -485,7 +501,11 @@ class ClassificationConfirmation(Base):
     """Human confirmation of one material category per document."""
 
     __tablename__ = "classification_confirmations"
-    __table_args__ = (UniqueConstraint("document_id",),)
+    __table_args__ = (
+        UniqueConstraint(
+            "document_id",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     application_id: Mapped[str] = mapped_column(
@@ -564,6 +584,144 @@ class CompletenessRun(Base):
         ForeignKey("completeness_templates.id", ondelete="CASCADE")
     )
     template_snapshot: Mapped[dict] = mapped_column(JSON)
+    input_snapshot: Mapped[dict] = mapped_column(JSON)
+    result_snapshot: Mapped[dict] = mapped_column(JSON)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(20), default=RunStatus.CURRENT, index=True)
+    stale_reason: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    actor_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+
+class RulePackage(Base):
+    """Versioned hard rule or judicial-risk reference line.
+
+    Approved versions are immutable; change happens through copy-to-change
+    which creates a new draft version with the same ``code``. Calculation
+    types are code-defined and published with tests; a package only configures
+    scope, parameters, thresholds, and legal basis — never executable formulas.
+    """
+
+    __tablename__ = "rule_packages"
+    __table_args__ = (UniqueConstraint("code", "version"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    code: Mapped[str] = mapped_column(String(60), index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    kind: Mapped[str] = mapped_column(String(20), index=True)
+    lender_qualification: Mapped[str] = mapped_column(String(60), index=True)
+    rule_context: Mapped[str] = mapped_column(String(100), index=True)
+    product: Mapped[str] = mapped_column(String(100), index=True)
+    effective_from: Mapped[date] = mapped_column(Date)
+    effective_until: Mapped[date | None] = mapped_column(Date, nullable=True)
+    calc_type: Mapped[str] = mapped_column(String(40))
+    params: Mapped[dict] = mapped_column(JSON)
+    legal_basis: Mapped[str] = mapped_column(Text)
+    reviewer: Mapped[str] = mapped_column(String(100))
+    reviewed_at: Mapped[date] = mapped_column(Date)
+    version: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(20), default=RuleStatus.DRAFT, index=True)
+    demo_only: Mapped[bool] = mapped_column(Boolean, default=False)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    retired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+
+class RuleContextConfirmation(Base):
+    """Owner-confirmed rule context (region/regulatory context) per application.
+
+    The system never infers rule context from the borrower address; the
+    context must be explicitly confirmed before rule selection.
+    """
+
+    __tablename__ = "rule_context_confirmations"
+    __table_args__ = (UniqueConstraint("application_id"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    application_id: Mapped[str] = mapped_column(
+        ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    )
+    context: Mapped[str] = mapped_column(String(100))
+    actor_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+
+class LprImport(Base):
+    """One validated LPR CSV batch; draft until explicitly published.
+
+    Only entries from published imports are eligible for selection. No runtime
+    scraping: data comes from official announcements imported by an admin.
+    """
+
+    __tablename__ = "lpr_imports"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    filename: Mapped[str] = mapped_column(String(255))
+    source_authority: Mapped[str] = mapped_column(String(200))
+    status: Mapped[str] = mapped_column(String(20), default=LprImportStatus.DRAFT, index=True)
+    demo_only: Mapped[bool] = mapped_column(Boolean, default=False)
+    row_count: Mapped[int] = mapped_column(Integer)
+    actor_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    entries: Mapped[list["LprEntry"]] = relationship(
+        back_populates="import_batch",
+        cascade="all, delete-orphan",
+        order_by="LprEntry.effective_date",
+    )
+
+
+class LprEntry(Base):
+    """One official LPR value for a tenor on an effective date."""
+
+    __tablename__ = "lpr_entries"
+    __table_args__ = (UniqueConstraint("import_id", "effective_date", "tenor"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    import_id: Mapped[str] = mapped_column(
+        ForeignKey("lpr_imports.id", ondelete="CASCADE"), index=True
+    )
+    effective_date: Mapped[date] = mapped_column(Date)
+    tenor: Mapped[str] = mapped_column(String(10))  # "1Y" or "5Y"
+    value: Mapped[str] = mapped_column(String(40))  # decimal string, percent
+    publication_date: Mapped[date] = mapped_column(Date)
+    source_url: Mapped[str] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    import_batch: Mapped[LprImport] = relationship(back_populates="entries")
+
+
+class RedlineRun(Base):
+    """Immutable formal redline snapshot with content hash.
+
+    ``status`` is ``current`` when created and flips to ``stale`` when any
+    redline input changes (resolution, rule context, application product or
+    proposed signing date) or when a new run is created. A newer applicable
+    rule or a different LPR selection for the run's as-of date also makes the
+    run stale via live checks. ``rule_id`` is null when selection is
+    indeterminate (no unique primary rule package).
+    """
+
+    __tablename__ = "redline_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    application_id: Mapped[str] = mapped_column(
+        ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    )
+    rule_id: Mapped[str | None] = mapped_column(
+        ForeignKey("rule_packages.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    rule_snapshot: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     input_snapshot: Mapped[dict] = mapped_column(JSON)
     result_snapshot: Mapped[dict] = mapped_column(JSON)
     content_hash: Mapped[str] = mapped_column(String(64))

@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/meta/fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Fields */
+        get: operations["list_fields_api_v1_meta_fields_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/users": {
         parameters: {
             query?: never;
@@ -170,6 +187,127 @@ export interface paths {
         put?: never;
         /** Retire Template */
         post: operations["retire_template_api_v1_admin_completeness_templates__template_id__retire_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/rule-packages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Rule Packages */
+        get: operations["list_rule_packages_api_v1_admin_rule_packages_get"];
+        put?: never;
+        /** Create Rule Package */
+        post: operations["create_rule_package_api_v1_admin_rule_packages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/rule-packages/{rule_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Rule Package */
+        put: operations["update_rule_package_api_v1_admin_rule_packages__rule_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/rule-packages/{rule_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Rule Package */
+        post: operations["approve_rule_package_api_v1_admin_rule_packages__rule_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/rule-packages/{rule_id}/copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Copy Rule Package */
+        post: operations["copy_rule_package_api_v1_admin_rule_packages__rule_id__copy_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/rule-packages/{rule_id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retire Rule Package */
+        post: operations["retire_rule_package_api_v1_admin_rule_packages__rule_id__retire_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/lpr-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Lpr Imports */
+        get: operations["list_lpr_imports_api_v1_admin_lpr_imports_get"];
+        put?: never;
+        /** Import Lpr Csv */
+        post: operations["import_lpr_csv_api_v1_admin_lpr_imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/lpr-imports/{import_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish Lpr Import */
+        post: operations["publish_lpr_import_api_v1_admin_lpr_imports__import_id__publish_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -525,6 +663,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/applications/{application_id}/redline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Redline */
+        get: operations["get_redline_api_v1_applications__application_id__redline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/rule-context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Rule Context */
+        post: operations["confirm_rule_context_api_v1_applications__application_id__rule_context_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/redline-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Redline Runs */
+        get: operations["list_redline_runs_api_v1_applications__application_id__redline_runs_get"];
+        put?: never;
+        /** Create Redline Run */
+        post: operations["create_redline_run_api_v1_applications__application_id__redline_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/redline-runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Redline Run */
+        get: operations["get_redline_run_api_v1_applications__application_id__redline_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/redline-runs/{run_id}/printable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Printable Redline Run */
+        get: operations["printable_redline_run_api_v1_applications__application_id__redline_runs__run_id__printable_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/live": {
         parameters: {
             query?: never;
@@ -624,6 +848,16 @@ export interface components {
             locator: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** Body_import_lpr_csv_api_v1_admin_lpr_imports_post */
+        Body_import_lpr_csv_api_v1_admin_lpr_imports_post: {
+            /**
+             * File
+             * Format: binary
+             */
+            file: string;
+            /** Source Authority */
+            source_authority: string;
         };
         /** Body_upload_document_api_v1_applications__application_id__documents_post */
         Body_upload_document_api_v1_applications__application_id__documents_post: {
@@ -863,6 +1097,25 @@ export interface components {
             /** Jobs */
             jobs: components["schemas"]["JobResponse"][];
         };
+        /** EvaluationResponse */
+        EvaluationResponse: {
+            /** State */
+            state: string;
+            /** State Label */
+            state_label: string;
+            /** Steps */
+            steps: {
+                [key: string]: unknown;
+            }[];
+            /** Metrics */
+            metrics: {
+                [key: string]: unknown;
+            };
+            /** Missing Inputs */
+            missing_inputs: string[];
+            /** Reason */
+            reason: string;
+        };
         /** EvidenceReviewRequest */
         EvidenceReviewRequest: {
             /**
@@ -901,6 +1154,19 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** FieldMetaResponse */
+        FieldMetaResponse: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Group */
+            group: string;
+            /** Group Label */
+            group_label: string;
+            /** Critical */
+            critical: boolean;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -944,7 +1210,32 @@ export interface components {
             condition_context: {
                 [key: string]: boolean;
             };
-            latest_run: components["schemas"]["RunSummaryResponse"] | null;
+            latest_run: components["schemas"]["app__completeness_api__RunSummaryResponse"] | null;
+            /** Formal Run Blocked Reason */
+            formal_run_blocked_reason: string | null;
+        };
+        /** LiveRedlineResponse */
+        LiveRedlineResponse: {
+            /** Rule Context */
+            rule_context: string | null;
+            selection: components["schemas"]["SelectionResponse"];
+            /** References */
+            references: {
+                [key: string]: unknown;
+            }[];
+            lpr: components["schemas"]["LprInfoResponse"];
+            /** Evaluation Date */
+            evaluation_date: string;
+            /** Critical */
+            critical: {
+                [key: string]: unknown;
+            };
+            /** State */
+            state: string;
+            /** State Label */
+            state_label: string;
+            primary: components["schemas"]["EvaluationResponse"] | null;
+            latest_run: components["schemas"]["app__redline_api__RunSummaryResponse"] | null;
             /** Formal Run Blocked Reason */
             formal_run_blocked_reason: string | null;
         };
@@ -954,6 +1245,64 @@ export interface components {
             username: string;
             /** Password */
             password: string;
+        };
+        /** LprEntryResponse */
+        LprEntryResponse: {
+            /** Id */
+            id: string;
+            /**
+             * Effective Date
+             * Format: date
+             */
+            effective_date: string;
+            /** Tenor */
+            tenor: string;
+            /** Value */
+            value: string;
+            /**
+             * Publication Date
+             * Format: date
+             */
+            publication_date: string;
+            /** Source Url */
+            source_url: string;
+        };
+        /** LprImportResponse */
+        LprImportResponse: {
+            /** Id */
+            id: string;
+            /** Filename */
+            filename: string;
+            /** Source Authority */
+            source_authority: string;
+            /** Status */
+            status: string;
+            /** Demo Only */
+            demo_only: boolean;
+            /** Row Count */
+            row_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Published At */
+            published_at: string | null;
+            /** Entries */
+            entries: components["schemas"]["LprEntryResponse"][];
+        };
+        /** LprInfoResponse */
+        LprInfoResponse: {
+            /** Entry Id */
+            entry_id: string | null;
+            /** Effective Date */
+            effective_date: string | null;
+            /** Value */
+            value: string | null;
+            /** Provisional */
+            provisional: boolean;
+            /** As Of Date */
+            as_of_date: string | null;
         };
         /** ManagedUserResponse */
         ManagedUserResponse: {
@@ -1107,32 +1456,17 @@ export interface components {
             /** Selected Steps */
             selected_steps: components["schemas"]["ProcessingStepName"][];
         };
-        /** RunDetailResponse */
-        RunDetailResponse: {
-            /** Id */
-            id: string;
+        /** RuleContextConfirmRequest */
+        RuleContextConfirmRequest: {
+            /** Context */
+            context: string;
+        };
+        /** RuleContextResponse */
+        RuleContextResponse: {
             /** Application Id */
             application_id: string;
-            /** Template Snapshot */
-            template_snapshot: {
-                [key: string]: unknown;
-            };
-            /** Input Snapshot */
-            input_snapshot: {
-                [key: string]: unknown;
-            };
-            /** Result Snapshot */
-            result_snapshot: {
-                [key: string]: unknown;
-            };
-            /** Content Hash */
-            content_hash: string;
-            /** Status */
-            status: string;
-            /** Stale */
-            stale: boolean;
-            /** Stale Reason */
-            stale_reason: string | null;
+            /** Context */
+            context: string;
             /** Actor Id */
             actor_id: string;
             /**
@@ -1141,29 +1475,154 @@ export interface components {
              */
             created_at: string;
         };
-        /** RunSummaryResponse */
-        RunSummaryResponse: {
+        /** RulePackageInput */
+        RulePackageInput: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Lender Qualification */
+            lender_qualification: string;
+            /** Rule Context */
+            rule_context: string;
+            /** Product */
+            product: string;
+            /**
+             * Effective From
+             * Format: date
+             */
+            effective_from: string;
+            /** Effective Until */
+            effective_until?: string | null;
+            /** Calc Type */
+            calc_type: string;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Legal Basis */
+            legal_basis: string;
+            /** Reviewer */
+            reviewer: string;
+            /**
+             * Reviewed At
+             * Format: date
+             */
+            reviewed_at: string;
+            /**
+             * Demo Only
+             * @default false
+             */
+            demo_only: boolean;
+        };
+        /** RulePackageResponse */
+        RulePackageResponse: {
             /** Id */
             id: string;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Lender Qualification */
+            lender_qualification: string;
+            /** Rule Context */
+            rule_context: string;
+            /** Product */
+            product: string;
+            /**
+             * Effective From
+             * Format: date
+             */
+            effective_from: string;
+            /** Effective Until */
+            effective_until: string | null;
+            /** Calc Type */
+            calc_type: string;
+            /** Calc Type Label */
+            calc_type_label: string;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Legal Basis */
+            legal_basis: string;
+            /** Reviewer */
+            reviewer: string;
+            /**
+             * Reviewed At
+             * Format: date
+             */
+            reviewed_at: string;
+            /** Version */
+            version: number;
+            /** Status */
+            status: string;
+            /** Demo Only */
+            demo_only: boolean;
+            /** Content Hash */
+            content_hash: string;
+            /** Approved At */
+            approved_at: string | null;
+            /** Retired At */
+            retired_at: string | null;
             /**
              * Created At
              * Format: date-time
              */
             created_at: string;
+        };
+        /** RuleResponse */
+        RuleResponse: {
+            /** Id */
+            id: string;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Lender Qualification */
+            lender_qualification: string;
+            /** Rule Context */
+            rule_context: string;
+            /** Product */
+            product: string;
+            /**
+             * Effective From
+             * Format: date
+             */
+            effective_from: string;
+            /** Effective Until */
+            effective_until: string | null;
+            /** Calc Type */
+            calc_type: string;
+            /** Calc Type Label */
+            calc_type_label: string;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Legal Basis */
+            legal_basis: string;
+            /** Reviewer */
+            reviewer: string;
+            /**
+             * Reviewed At
+             * Format: date
+             */
+            reviewed_at: string;
+            /** Version */
+            version: number;
             /** Status */
             status: string;
-            /** Stale */
-            stale: boolean;
-            /** Stale Reason */
-            stale_reason: string | null;
+            /** Demo Only */
+            demo_only: boolean;
             /** Content Hash */
             content_hash: string;
-            /** Template Code */
-            template_code: string;
-            /** Template Version */
-            template_version: number;
-            /** Actor Id */
-            actor_id: string;
         };
         /** SealCandidateResponse */
         SealCandidateResponse: {
@@ -1182,6 +1641,16 @@ export interface components {
             confidence: number;
             /** Model Version */
             model_version: string;
+        };
+        /** SelectionResponse */
+        SelectionResponse: {
+            /** Reason */
+            reason: string;
+            rule: components["schemas"]["RuleResponse"] | null;
+            /** Candidates */
+            candidates: components["schemas"]["RuleResponse"][];
+            /** Explanation */
+            explanation: string;
         };
         /** SourceRefResponse */
         SourceRefResponse: {
@@ -1317,6 +1786,34 @@ export interface components {
             version: number;
         };
         /**
+         * UpdateRulePackageRequest
+         * @description Draft-only edit; approved/retired versions stay immutable.
+         */
+        UpdateRulePackageRequest: {
+            /** Name */
+            name: string;
+            /**
+             * Effective From
+             * Format: date
+             */
+            effective_from: string;
+            /** Effective Until */
+            effective_until?: string | null;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Legal Basis */
+            legal_basis: string;
+            /** Reviewer */
+            reviewer: string;
+            /**
+             * Reviewed At
+             * Format: date
+             */
+            reviewed_at: string;
+        };
+        /**
          * UpdateTemplateRequest
          * @description Draft-only edit; published/retired versions stay immutable.
          */
@@ -1375,6 +1872,126 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** RunDetailResponse */
+        app__completeness_api__RunDetailResponse: {
+            /** Id */
+            id: string;
+            /** Application Id */
+            application_id: string;
+            /** Template Snapshot */
+            template_snapshot: {
+                [key: string]: unknown;
+            };
+            /** Input Snapshot */
+            input_snapshot: {
+                [key: string]: unknown;
+            };
+            /** Result Snapshot */
+            result_snapshot: {
+                [key: string]: unknown;
+            };
+            /** Content Hash */
+            content_hash: string;
+            /** Status */
+            status: string;
+            /** Stale */
+            stale: boolean;
+            /** Stale Reason */
+            stale_reason: string | null;
+            /** Actor Id */
+            actor_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** RunSummaryResponse */
+        app__completeness_api__RunSummaryResponse: {
+            /** Id */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Status */
+            status: string;
+            /** Stale */
+            stale: boolean;
+            /** Stale Reason */
+            stale_reason: string | null;
+            /** Content Hash */
+            content_hash: string;
+            /** Template Code */
+            template_code: string;
+            /** Template Version */
+            template_version: number;
+            /** Actor Id */
+            actor_id: string;
+        };
+        /** RunDetailResponse */
+        app__redline_api__RunDetailResponse: {
+            /** Id */
+            id: string;
+            /** Application Id */
+            application_id: string;
+            /** Rule Id */
+            rule_id: string | null;
+            /** Rule Snapshot */
+            rule_snapshot: {
+                [key: string]: unknown;
+            } | null;
+            /** Input Snapshot */
+            input_snapshot: {
+                [key: string]: unknown;
+            };
+            /** Result Snapshot */
+            result_snapshot: {
+                [key: string]: unknown;
+            };
+            /** Content Hash */
+            content_hash: string;
+            /** Status */
+            status: string;
+            /** Stale */
+            stale: boolean;
+            /** Stale Reason */
+            stale_reason: string | null;
+            /** Actor Id */
+            actor_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** RunSummaryResponse */
+        app__redline_api__RunSummaryResponse: {
+            /** Id */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Status */
+            status: string;
+            /** Stale */
+            stale: boolean;
+            /** Stale Reason */
+            stale_reason: string | null;
+            /** Content Hash */
+            content_hash: string;
+            /** Rule Code */
+            rule_code: string | null;
+            /** Rule Version */
+            rule_version: number | null;
+            /** State */
+            state: string;
+            /** Actor Id */
+            actor_id: string;
         };
     };
     responses: never;
@@ -1467,6 +2084,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_fields_api_v1_meta_fields_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldMetaResponse"][];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -1792,6 +2440,328 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TemplateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_rule_packages_api_v1_admin_rule_packages_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackageResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_rule_package_api_v1_admin_rule_packages_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RulePackageInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_rule_package_api_v1_admin_rule_packages__rule_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                rule_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRulePackageRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_rule_package_api_v1_admin_rule_packages__rule_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                rule_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    copy_rule_package_api_v1_admin_rule_packages__rule_id__copy_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                rule_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retire_rule_package_api_v1_admin_rule_packages__rule_id__retire_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                rule_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_lpr_imports_api_v1_admin_lpr_imports_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LprImportResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_lpr_csv_api_v1_admin_lpr_imports_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_lpr_csv_api_v1_admin_lpr_imports_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LprImportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_lpr_import_api_v1_admin_lpr_imports__import_id__publish_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LprImportResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2621,7 +3591,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RunSummaryResponse"][];
+                    "application/json": components["schemas"]["app__completeness_api__RunSummaryResponse"][];
                 };
             };
             /** @description Validation Error */
@@ -2658,7 +3628,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RunDetailResponse"];
+                    "application/json": components["schemas"]["app__completeness_api__RunDetailResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2692,7 +3662,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RunDetailResponse"];
+                    "application/json": components["schemas"]["app__completeness_api__RunDetailResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2707,6 +3677,218 @@ export interface operations {
         };
     };
     printable_completeness_run_api_v1_applications__application_id__completeness_runs__run_id__printable_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+                run_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_redline_api_v1_applications__application_id__redline_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiveRedlineResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_rule_context_api_v1_applications__application_id__rule_context_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuleContextConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleContextResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_redline_runs_api_v1_applications__application_id__redline_runs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__redline_api__RunSummaryResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_redline_run_api_v1_applications__application_id__redline_runs_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__redline_api__RunDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_redline_run_api_v1_applications__application_id__redline_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+                run_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__redline_api__RunDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    printable_redline_run_api_v1_applications__application_id__redline_runs__run_id__printable_get: {
         parameters: {
             query?: never;
             header?: never;

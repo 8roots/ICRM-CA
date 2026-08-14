@@ -113,6 +113,11 @@ onUnmounted(() => window.clearInterval(timer))
         class="candidate-link"
         :to="`/applications/${route.params.id}/completeness`"
       >材料完备性与正式报告</router-link>
+      <span class="link-sep">·</span>
+      <router-link
+        class="candidate-link"
+        :to="`/applications/${route.params.id}/redline`"
+      >红线评估与正式报告</router-link>
     </p>
     <label class="upload-button">
       {{ uploading ? '上传中…' : '批量上传材料' }}
