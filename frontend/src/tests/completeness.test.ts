@@ -275,8 +275,13 @@ test('历史报告展示失效原因', async () => {
 
 test('无适用模板时提示且不渲染清单', async () => {
   document.cookie = 'icrm_csrf=test-csrf; path=/'
-  vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
-    json({
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    const url = String(input)
+    if (url.includes('/completeness-runs')) return json([])
+    if (url.includes('/lifecycle')) {
+      return json({ state: 'pending_review', version: 1, editable: true, can_complete: true, can_archive: true, can_reopen: false, completion_blockers: [] })
+    }
+    return json({
       template: null,
       no_template_reason: '没有适用于该产品与主借款人类型的已发布模板，无法生成正式报告',
       items: [],
@@ -286,8 +291,8 @@ test('无适用模板时提示且不渲染清单', async () => {
       condition_context: { collateral: false, guarantor: false },
       latest_run: null,
       formal_run_blocked_reason: '无已发布适用模板',
-    }),
-  )
+    })
+  })
   const wrapper = await mountView()
 
   expect(wrapper.text()).toContain('没有适用于该产品与主借款人类型的已发布模板')
