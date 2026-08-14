@@ -5,6 +5,8 @@ import {
   request,
   type CandidateResponse,
   type CloudCallResponse,
+  type CloudGate,
+  type Lifecycle,
   type ResolutionInput,
   type ResolutionResponse,
 } from '../api/client'
@@ -16,6 +18,8 @@ const applicationId = String(route.params.id)
 const candidates = ref<CandidateResponse[]>([])
 const resolutions = ref<ResolutionResponse[]>([])
 const cloudCalls = ref<CloudCallResponse[]>([])
+const cloudGate = ref<CloudGate | null>(null)
+const lifecycle = ref<Lifecycle | null>(null)
 const loading = ref(false)
 const actionError = ref('')
 
@@ -176,6 +180,16 @@ async function refresh() {
     } catch {
       whitelist.value = []
     }
+    try {
+      cloudGate.value = await request<CloudGate>('/api/v1/meta/cloud-gate')
+    } catch {
+      cloudGate.value = null
+    }
+    try {
+      lifecycle.value = await request<Lifecycle>(`/api/v1/applications/${applicationId}/lifecycle`)
+    } catch {
+      lifecycle.value = null
+    }
   } finally {
     loading.value = false
   }
@@ -193,9 +207,28 @@ onMounted(refresh)
       候选值不可修改或删除，您的选择、修正或人工录入会生成为独立的确认记录。
     </p>
 
+    <el-alert
+      v-if="cloudGate && !cloudGate.ready"
+      type="warning"
+      title="云端字段抽取未启用：本地规则候选照常可用，未覆盖字段不会调用云端。"
+      :closable="false"
+      show-icon
+    />
+    <el-alert
+      v-if="lifecycle && !lifecycle.editable"
+      type="info"
+      title="申请已归档或完成，处于只读状态。"
+      :closable="false"
+    />
+
     <div class="toolbar">
       <el-button :aria-label="'刷新候选'" @click="refresh">刷新</el-button>
-      <el-button type="primary" :aria-label="'人工录入确认值'" @click="openManual">
+      <el-button
+        type="primary"
+        :aria-label="'人工录入确认值'"
+        :disabled="lifecycle ? !lifecycle.editable : false"
+        @click="openManual"
+      >
         人工录入确认值
       </el-button>
     </div>
@@ -245,12 +278,19 @@ onMounted(refresh)
           <el-button size="small" :aria-label="`跳转证据-${scope.row.field_label}`" @click="jumpToEvidence(scope.row)">
             定位证据
           </el-button>
-          <el-button size="small" type="primary" :aria-label="`采用候选-${scope.row.field_label}`" @click="openSelected(scope.row)">
-            采用
-          </el-button>
-          <el-button size="small" :aria-label="`修正候选-${scope.row.field_label}`" @click="openCorrected(scope.row)">
-            修正
-          </el-button>
+          <el-button
+            size="small"
+            type="primary"
+            :aria-label="`采用候选-${scope.row.field_label}`"
+            :disabled="lifecycle ? !lifecycle.editable : false"
+            @click="openSelected(scope.row)"
+          >采用</el-button>
+          <el-button
+            size="small"
+            :aria-label="`修正候选-${scope.row.field_label}`"
+            :disabled="lifecycle ? !lifecycle.editable : false"
+            @click="openCorrected(scope.row)"
+          >修正</el-button>
         </template>
       </el-table-column>
     </el-table>

@@ -19,6 +19,17 @@ const application = {
   lifecycle_state: 'draft',
   version: 1,
 }
+
+const lifecycle = {
+  state: 'draft',
+  version: 1,
+  editable: true,
+  can_complete: false,
+  can_archive: true,
+  can_reopen: false,
+  completion_blockers: [],
+}
+
 const individualApplication = {
   ...application,
   id: 'application-2',
@@ -63,9 +74,11 @@ test('申请负责人批量上传材料并看到处理状态与带理由重试',
   }
   const fetchMock = vi.spyOn(globalThis, 'fetch')
     .mockResolvedValueOnce(Response.json(application))
+    .mockResolvedValueOnce(Response.json(lifecycle))
     .mockResolvedValueOnce(Response.json([]))
     .mockResolvedValueOnce(Response.json({ document: waiting, job: waiting.jobs[0] }, { status: 202 }))
     .mockResolvedValueOnce(Response.json({ document: failed, job: failed.jobs[0] }, { status: 202 }))
+    .mockResolvedValueOnce(Response.json(lifecycle))
     .mockResolvedValueOnce(Response.json({ ...failed.jobs[0], status: 'waiting', retry_reason: '重新上传前人工确认' }))
 
   const wrapper = await mountApplicationDetail()
@@ -91,6 +104,7 @@ test('重试请求失败时展示结果', async () => {
   }
   vi.spyOn(globalThis, 'fetch')
     .mockResolvedValueOnce(Response.json(application))
+    .mockResolvedValueOnce(Response.json(lifecycle))
     .mockResolvedValueOnce(Response.json([failed]))
     .mockResolvedValueOnce(Response.json({ detail: 'Only failed steps can be retried' }, { status: 409 }))
   const wrapper = await mountApplicationDetail()
@@ -108,6 +122,7 @@ test('批量上传中单份请求失败不阻塞其他材料且错误可见', as
   }
   vi.spyOn(globalThis, 'fetch')
     .mockResolvedValueOnce(Response.json(application))
+    .mockResolvedValueOnce(Response.json(lifecycle))
     .mockResolvedValueOnce(Response.json([]))
     .mockResolvedValueOnce(Response.json({ document: waiting, job: waiting.jobs[0] }, { status: 202 }))
     .mockResolvedValueOnce(Response.json({ detail: 'Material size limit exceeded' }, { status: 413 }))
@@ -126,6 +141,7 @@ test('轮询展示 worker 从等待到运行再到成功的状态', async () => 
   }
   vi.spyOn(globalThis, 'fetch')
     .mockResolvedValueOnce(Response.json(application))
+    .mockResolvedValueOnce(Response.json(lifecycle))
     .mockResolvedValueOnce(Response.json([{ ...base, processing_status: 'waiting' }]))
     .mockResolvedValueOnce(Response.json([{ ...base, processing_status: 'running' }]))
     .mockResolvedValueOnce(Response.json([{ ...base, processing_status: 'success' }]))

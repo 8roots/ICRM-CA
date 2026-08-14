@@ -92,6 +92,8 @@ function baseMocks() {
     .mockResolvedValueOnce(Response.json([]))
     .mockResolvedValueOnce(Response.json([]))
     .mockResolvedValueOnce(Response.json([])) // GET /api/v1/meta/fields
+    .mockResolvedValueOnce(Response.json({ configured: true, confirmed: true, ready: true, blockers: [] })) // GET /api/v1/meta/cloud-gate
+    .mockResolvedValueOnce(Response.json({ state: 'pending_review', version: 1, editable: true, can_complete: true, can_archive: true, can_reopen: false, completion_blockers: [] })) // GET lifecycle
 }
 
 test('候选按置信度降序展示，并标注字段、来源与置信度', async () => {

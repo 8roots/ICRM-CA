@@ -1,4 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import AdminApplicationsView from './views/AdminApplicationsView.vue'
+import AdminAuditView from './views/AdminAuditView.vue'
+import AdminQueueView from './views/AdminQueueView.vue'
 import AdminRulesView from './views/AdminRulesView.vue'
 import AdminTemplatesView from './views/AdminTemplatesView.vue'
 import AdminUsersView from './views/AdminUsersView.vue'
@@ -22,7 +25,10 @@ export const router = createRouter({
     { path: '/applications/:id/redline', component: RedlineView },
     { path: '/documents/:id/evidence', component: DocumentEvidenceView },
     { path: '/admin/users', component: AdminUsersView },
+    { path: '/admin/applications', component: AdminApplicationsView },
     { path: '/admin/templates', component: AdminTemplatesView },
     { path: '/admin/rules', component: AdminRulesView },
+    { path: '/admin/queue', component: AdminQueueView },
+    { path: '/admin/audit', component: AdminAuditView },
   ],
 })

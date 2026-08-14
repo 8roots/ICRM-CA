@@ -58,15 +58,20 @@ class DeepSeekClient:
         model: str,
         *,
         timeout: float = 30.0,
+        cloud_confirmed: bool = False,
     ) -> None:
         self.base_url = base_url
         self.api_key = api_key
         self.model = model
         self.timeout = timeout
+        # Cloud readiness gate (design 10.2): the provider's no-training
+        # confirmation and an explicit retention period must be configured
+        # before the cloud path is enabled; local extraction is unaffected.
+        self.cloud_confirmed = cloud_confirmed
 
     @property
     def enabled(self) -> bool:
-        return bool(self.base_url and self.api_key and self.model)
+        return bool(self.base_url and self.api_key and self.model and self.cloud_confirmed)
 
     def extract(self, slices: list[RedactedSlice]) -> list[CloudCandidate]:
         if not self.enabled:

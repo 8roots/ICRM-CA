@@ -141,6 +141,9 @@ function mockDraft(latestRun: unknown = null) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = String(input)
     if (url.includes('/completeness-runs')) return json(runs)
+    if (url.includes('/lifecycle')) {
+      return json({ state: 'pending_review', version: 1, editable: true, can_complete: true, can_archive: true, can_reopen: false, completion_blockers: [] })
+    }
     return json(draftBody(latestRun))
   })
 }

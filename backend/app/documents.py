@@ -12,8 +12,17 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from starlette.responses import StreamingResponse
 
+from app.audit import (
+    DOCUMENT_DOWNLOADED,
+    DOCUMENT_UPLOADED,
+    DOCUMENTS_VIEWED,
+    JOB_RETRIED,
+    record_audit,
+    request_correlation_id,
+)
 from app.dependencies import Csrf, CurrentUser, Db
 from app.idempotency import add_idempotency_record, replay_resource_id
+from app.lifecycle_guard import require_mutable
 from app.material_formats import FORMATS, MANUAL_EXTENSIONS
 from app.models import (
     Application,
@@ -242,7 +251,8 @@ def upload_document(
     file: Annotated[UploadFile, File()],
     idempotency_key: str = Header(alias="Idempotency-Key", min_length=1, max_length=255),
 ) -> UploadResponse:
-    owned_application(db, application_id, user.id)
+    application = owned_application(db, application_id, user.id)
+    require_mutable(db, application)
     limits = request.app.state.document_limits
     extension = Path(file.filename or "material").suffix.lower()
     object_key = f"{application_id}/{uuid.uuid4()}"
@@ -263,6 +273,7 @@ def upload_document(
         request_hash = upload_request_hash(sha256, filename, mime)
         operation = f"upload_document:{application_id}"
         application = owned_application(db, application_id, user.id, lock=True)
+        require_mutable(db, application)
         existing = existing_upload(
             db,
             application_id,
@@ -300,6 +311,19 @@ def upload_document(
             document.id,
         )
         update_application_lifecycle(db, application)
+        record_audit(
+            db,
+            event_type=DOCUMENT_UPLOADED,
+            actor=user,
+            resource_type="document",
+            resource_id=document.id,
+            correlation_id=request_correlation_id(request),
+            metadata={
+                "application_id": application_id,
+                "filename": filename,
+                "size_bytes": stream.size,
+            },
+        )
         db.commit()
         return UploadResponse(document=as_document(document), job=as_job(job))
     try:
@@ -310,6 +334,7 @@ def upload_document(
         request_hash = upload_request_hash(sha256, filename, mime)
         operation = f"upload_document:{application_id}"
         application = owned_application(db, application_id, user.id, lock=True)
+        require_mutable(db, application)
         existing = existing_upload(
             db,
             application_id,
@@ -355,6 +380,15 @@ def upload_document(
             document.id,
         )
         update_application_lifecycle(db, application)
+        record_audit(
+            db,
+            event_type=DOCUMENT_UPLOADED,
+            actor=user,
+            resource_type="document",
+            resource_id=document.id,
+            correlation_id=request_correlation_id(request),
+            metadata={"application_id": application_id, "filename": filename, "size_bytes": size},
+        )
         try:
             db.commit()
         except IntegrityError:
@@ -389,8 +423,20 @@ def upload_document(
 
 
 @router.get("/applications/{application_id}/documents", response_model=list[DocumentResponse])
-def list_documents(application_id: str, db: Db, user: CurrentUser) -> list[DocumentResponse]:
+def list_documents(
+    application_id: str, request: Request, db: Db, user: CurrentUser
+) -> list[DocumentResponse]:
     owned_application(db, application_id, user.id)
+    record_audit(
+        db,
+        event_type=DOCUMENTS_VIEWED,
+        actor=user,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=request_correlation_id(request),
+        dedupe_minutes=5,
+    )
+    db.commit()
     documents = (
         db.query(Document)
         .filter_by(application_id=application_id)
@@ -429,6 +475,16 @@ def download_document(
     )
     if not document:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
+    record_audit(
+        db,
+        event_type=DOCUMENT_DOWNLOADED,
+        actor=user,
+        resource_type="document",
+        resource_id=document_id,
+        correlation_id=request_correlation_id(request),
+        metadata={"application_id": document.application_id, "filename": document.filename},
+    )
+    db.commit()
     try:
         source = request.app.state.object_store.open(document.object_key)
     except (S3Error, KeyError):
@@ -450,6 +506,7 @@ def download_document(
 def retry_job(
     job_id: str,
     payload: RetryRequest,
+    request: Request,
     db: Db,
     user: CurrentUser,
     csrf: Csrf,
@@ -464,6 +521,8 @@ def retry_job(
     )
     if not job:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+    application = db.get(Application, job.document.application_id)
+    require_mutable(db, application)
     request_hash = hashlib.sha256(payload.model_dump_json().encode()).hexdigest()
     replay_id = replay_resource_id(
         db, user.id, f"retry_job:{job_id}", idempotency_key, request_hash
@@ -512,7 +571,6 @@ def retry_job(
             step.error_code = None
     job.document.processing_status = JobStatus.WAITING
     job.document.review_status = ReviewStatus.NOT_READY
-    application = db.get(Application, job.document.application_id)
     application.lifecycle_state = "processing"
     add_idempotency_record(
         db,
@@ -521,6 +579,15 @@ def retry_job(
         idempotency_key,
         request_hash,
         job.document_id,
+    )
+    record_audit(
+        db,
+        event_type=JOB_RETRIED,
+        actor=user,
+        resource_type="document",
+        resource_id=job.document_id,
+        correlation_id=request_correlation_id(request),
+        metadata={"application_id": application.id, "job_id": job_id, "reason": payload.reason},
     )
     db.commit()
     return as_job(job)

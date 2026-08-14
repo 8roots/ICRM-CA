@@ -38,7 +38,7 @@ def create_admin_command() -> None:
     if password != confirmation:
         parser.error("passwords do not match")
     try:
-        with Database(settings.database_url).session() as db:
+        with Database(settings.effective_database_url).session() as db:
             create_first_admin(db, args.username, password)
     except ValueError as error:
         parser.error(str(error))

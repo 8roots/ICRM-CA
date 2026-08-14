@@ -4,6 +4,13 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field
 
+from app.audit import (
+    AUTH_LOGIN,
+    AUTH_LOGIN_FAILED,
+    AUTH_LOGOUT,
+    record_audit,
+    request_correlation_id,
+)
 from app.dependencies import CSRF_COOKIE, SESSION_COOKIE, Csrf, CurrentUser, Db
 from app.models import LoginSession, User
 from app.security import random_token, token_hash, verify_password
@@ -30,7 +37,24 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Db) -
 
     user = db.query(User).filter_by(username=payload.username).first()
     if not user or not user.enabled or not verify_password(user.password_hash, payload.password):
+        record_audit(
+            db,
+            event_type=AUTH_LOGIN_FAILED,
+            actor_username=payload.username,
+            resource_type="auth",
+            correlation_id=request_correlation_id(request),
+        )
+        db.commit()
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid credentials")
+
+    record_audit(
+        db,
+        event_type=AUTH_LOGIN,
+        actor=user,
+        resource_type="user",
+        resource_id=user.id,
+        correlation_id=request_correlation_id(request),
+    )
 
     session_token = random_token()
     csrf_token = random_token()
@@ -70,7 +94,15 @@ def logout(
     session_token = request.cookies.get(SESSION_COOKIE)
     if session_token:
         db.query(LoginSession).filter_by(token_hash=token_hash(session_token)).delete()
-        db.commit()
+    record_audit(
+        db,
+        event_type=AUTH_LOGOUT,
+        actor=user,
+        resource_type="user",
+        resource_id=user.id,
+        correlation_id=request_correlation_id(request),
+    )
+    db.commit()
     response.delete_cookie(
         SESSION_COOKIE, path="/", secure=request.app.state.cookie_secure, samesite="strict"
     )

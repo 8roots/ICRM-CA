@@ -129,6 +129,7 @@ def finish_job(
     )
     if not has_active_jobs:
         application = db.get(Application, job.document.application_id)
-        application.lifecycle_state = "pending_review"
+        if application.lifecycle_state not in {"archived", "review_complete"}:
+            application.lifecycle_state = "pending_review"
     db.commit()
     return True

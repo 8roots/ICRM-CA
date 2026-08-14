@@ -19,10 +19,17 @@ from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
-from fastapi import APIRouter, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Form, HTTPException, Request, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.exc import IntegrityError
 
+from app.audit import (
+    LPR_PUBLISHED,
+    RULE_APPROVED,
+    RULE_RETIRED,
+    record_audit,
+    request_correlation_id,
+)
 from app.dependencies import Administrator, Csrf, Db
 from app.models import (
     LprEntry,
@@ -295,6 +302,7 @@ def update_rule_package(
 @router.post("/rule-packages/{rule_id}/approve", response_model=RulePackageResponse)
 def approve_rule_package(
     rule_id: str,
+    request: Request,
     db: Db,
     admin: Administrator,
     csrf: Csrf,
@@ -328,6 +336,15 @@ def approve_rule_package(
                 )
     rule.status = RuleStatus.APPROVED
     rule.approved_at = datetime.now(UTC)
+    record_audit(
+        db,
+        event_type=RULE_APPROVED,
+        actor=admin,
+        resource_type="rule",
+        resource_id=rule.id,
+        correlation_id=request_correlation_id(request),
+        metadata={"code": rule.code, "version": rule.version, "kind": rule.kind},
+    )
     db.commit()
     return as_rule(rule)
 
@@ -383,6 +400,7 @@ def copy_rule_package(
 @router.post("/rule-packages/{rule_id}/retire", response_model=RulePackageResponse)
 def retire_rule_package(
     rule_id: str,
+    request: Request,
     db: Db,
     admin: Administrator,
     csrf: Csrf,
@@ -392,6 +410,15 @@ def retire_rule_package(
         raise HTTPException(status.HTTP_409_CONFLICT, "Only approved rule packages can be retired")
     rule.status = RuleStatus.RETIRED
     rule.retired_at = datetime.now(UTC)
+    record_audit(
+        db,
+        event_type=RULE_RETIRED,
+        actor=admin,
+        resource_type="rule",
+        resource_id=rule.id,
+        correlation_id=request_correlation_id(request),
+        metadata={"code": rule.code, "version": rule.version, "kind": rule.kind},
+    )
     db.commit()
     return as_rule(rule)
 
@@ -495,6 +522,7 @@ def import_lpr_csv(
 @router.post("/lpr-imports/{import_id}/publish", response_model=LprImportResponse)
 def publish_lpr_import(
     import_id: str,
+    request: Request,
     db: Db,
     admin: Administrator,
     csrf: Csrf,
@@ -508,5 +536,14 @@ def publish_lpr_import(
         raise HTTPException(status.HTTP_409_CONFLICT, "LPR import has no entries")
     batch.status = LprImportStatus.PUBLISHED
     batch.published_at = datetime.now(UTC)
+    record_audit(
+        db,
+        event_type=LPR_PUBLISHED,
+        actor=admin,
+        resource_type="lpr",
+        resource_id=batch.id,
+        correlation_id=request_correlation_id(request),
+        metadata={"filename": batch.filename, "row_count": batch.row_count},
+    )
     db.commit()
     return as_import(batch)

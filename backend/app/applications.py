@@ -2,12 +2,20 @@ import hashlib
 from datetime import date
 from typing import Literal
 
-from fastapi import APIRouter, Header, HTTPException, Response, status
+from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 
+from app.audit import (
+    APPLICATION_CREATED,
+    APPLICATION_UPDATED,
+    APPLICATION_VIEWED,
+    record_audit,
+    request_correlation_id,
+)
 from app.dependencies import Csrf, CurrentUser, Db
+from app.lifecycle_guard import require_mutable
 from app.models import Application, IdempotencyRecord, User
 from app.redline import mark_runs_stale as mark_redline_runs_stale
 
@@ -77,6 +85,7 @@ def list_applications(db: Db, user: CurrentUser) -> list[ApplicationResponse]:
 @router.post("", response_model=ApplicationResponse, status_code=status.HTTP_201_CREATED)
 def create_application(
     payload: ApplicationFields,
+    request: Request,
     response: Response,
     db: Db,
     user: CurrentUser,
@@ -138,15 +147,36 @@ def create_application(
         response.status_code = status.HTTP_200_OK
         return as_response(db.get(Application, winner.resource_id))
     db.refresh(application)
+    record_audit(
+        db,
+        event_type=APPLICATION_CREATED,
+        actor=user,
+        resource_type="application",
+        resource_id=application.id,
+        correlation_id=request_correlation_id(request),
+    )
+    db.commit()
     return as_response(application)
 
 
 @router.get("/{application_id}", response_model=ApplicationResponse)
-def get_application(application_id: str, db: Db, user: CurrentUser) -> ApplicationResponse:
+def get_application(
+    application_id: str, request: Request, db: Db, user: CurrentUser
+) -> ApplicationResponse:
     require_officer(user)
     application = db.query(Application).filter_by(id=application_id, owner_id=user.id).first()
     if not application:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Application not found")
+    record_audit(
+        db,
+        event_type=APPLICATION_VIEWED,
+        actor=user,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=request_correlation_id(request),
+        dedupe_minutes=5,
+    )
+    db.commit()
     return as_response(application)
 
 
@@ -154,11 +184,16 @@ def get_application(application_id: str, db: Db, user: CurrentUser) -> Applicati
 def update_application(
     application_id: str,
     payload: UpdateApplicationRequest,
+    request: Request,
     db: Db,
     user: CurrentUser,
     csrf: Csrf,
 ) -> ApplicationResponse:
     require_officer(user)
+    owned = db.query(Application).filter_by(id=application_id, owner_id=user.id).first()
+    if not owned:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Application not found")
+    require_mutable(db, owned)
     result = db.execute(
         update(Application)
         .where(
@@ -183,5 +218,13 @@ def update_application(
     # Product and proposed signing date feed redline rule selection and LPR
     # timing, so changing them invalidates any current formal redline report.
     mark_redline_runs_stale(db, application_id, "application_change")
+    record_audit(
+        db,
+        event_type=APPLICATION_UPDATED,
+        actor=user,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=request_correlation_id(request),
+    )
     db.commit()
     return as_response(db.get(Application, application_id))

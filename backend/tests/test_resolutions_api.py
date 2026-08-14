@@ -13,6 +13,7 @@ from app.models import (
     Base,
     CandidateFact,
     Document,
+    DocumentOutput,
     User,
 )
 from app.parsed_outputs import store_parsed_output
@@ -306,9 +307,18 @@ def test_candidate_from_another_application_is_rejected(client) -> None:
             )
             db.add(document)
             db.flush()
+            output = DocumentOutput(
+                document_id=document.id,
+                version=1,
+                status="success",
+                parser_version="p1",
+                model_version="m1",
+            )
+            db.add(output)
+            db.flush()
             foreign_candidate = CandidateFact(
                 document_id=document.id,
-                output_id="output-x",
+                output_id=output.id,
                 field_key="loan_amount",
                 raw_text="100万元",
                 typed_value={"type": "amount", "value": "1000000"},

@@ -55,6 +55,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/meta/cloud-gate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cloud Gate
+         * @description Cloud readiness gate: whether DeepSeek extraction is enabled.
+         *
+         *     Missing credentials or a missing no-training/retention confirmation
+         *     disable the cloud path; local candidate extraction continues regardless.
+         */
+        get: operations["cloud_gate_api_v1_meta_cloud_gate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/meta/fields": {
         parameters: {
             query?: never;
@@ -64,6 +87,49 @@ export interface paths {
         };
         /** List Fields */
         get: operations["list_fields_api_v1_meta_fields_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Queue Status
+         * @description Admin task backlog / failure / retry view with worker heartbeats.
+         */
+        get: operations["queue_status_api_v1_admin_queue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Admin Applications
+         * @description Admin metadata-only view of all applications (never material content).
+         *
+         *     The admin never gains material access; every officer-facing endpoint
+         *     remains scoped to the application owner.
+         */
+        get: operations["list_admin_applications_api_v1_admin_applications_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -344,6 +410,143 @@ export interface paths {
         /** Update Application */
         put: operations["update_application_api_v1_applications__application_id__put"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/lifecycle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Lifecycle */
+        get: operations["get_lifecycle_api_v1_applications__application_id__lifecycle_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete Application */
+        post: operations["complete_application_api_v1_applications__application_id__complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reopen Application */
+        post: operations["reopen_application_api_v1_applications__application_id__reopen_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive Application */
+        post: operations["archive_application_api_v1_applications__application_id__archive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/reassign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reassign Application
+         * @description Admin metadata-only reassignment; the admin gains no material access.
+         *
+         *     The previous owner loses access immediately because every officer query
+         *     filters by ``owner_id``.
+         */
+        post: operations["reassign_application_api_v1_applications__application_id__reassign_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/hard-delete-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request Hard Delete
+         * @description Phase one: record the reason and issue a short-lived confirmation token.
+         */
+        post: operations["request_hard_delete_api_v1_applications__application_id__hard_delete_requests_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/hard-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm Hard Delete
+         * @description Phase two: with the confirmation token, delete originals + derivatives.
+         *
+         *     The database rows are removed first (cascading over outputs, candidates,
+         *     resolutions, runs, confirmations, and restricted cloud audit). Original
+         *     material objects are then removed from MinIO; any object that cannot be
+         *     removed is recorded on the tombstone so the partial failure stays visible
+         *     and recoverable. Only the non-sensitive tombstone row remains.
+         */
+        post: operations["confirm_hard_delete_api_v1_applications__application_id__hard_delete_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -749,6 +952,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/audit/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Audit Events */
+        get: operations["list_audit_events_api_v1_audit_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{application_id}/audit-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Application Audit Events
+         * @description Application-scoped audit for the owner; administrators see everything.
+         */
+        get: operations["list_application_audit_events_api_v1_applications__application_id__audit_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/live": {
         parameters: {
             query?: never;
@@ -773,7 +1013,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Ready */
+        /**
+         * Ready
+         * @description Ready / degraded / failed with per-component detail.
+         *
+         *     ``ready`` requires a working database, an object store, and (when jobs
+         *     are waiting or running) a fresh worker heartbeat. ``degraded`` still
+         *     returns 503 but reports exactly which component is unhealthy.
+         */
         get: operations["ready_health_ready_get"];
         put?: never;
         post?: never;
@@ -787,6 +1034,37 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AdminApplicationResponse */
+        AdminApplicationResponse: {
+            /** Id */
+            id: string;
+            /** Borrower Type */
+            borrower_type: string;
+            /** Borrower Name */
+            borrower_name: string;
+            /** Product */
+            product: string;
+            /**
+             * Application Date
+             * Format: date
+             */
+            application_date: string;
+            /** Proposed Signing Date */
+            proposed_signing_date: string | null;
+            /** Owner Id */
+            owner_id: string;
+            /** Owner Username */
+            owner_username: string;
+            /** Lifecycle State */
+            lifecycle_state: string;
+            /** Version */
+            version: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** ApplicationFields */
         ApplicationFields: {
             primary_borrower: components["schemas"]["PrimaryBorrower"];
@@ -820,6 +1098,32 @@ export interface components {
             lifecycle_state: string;
             /** Version */
             version: number;
+        };
+        /** AuditEventResponse */
+        AuditEventResponse: {
+            /** Id */
+            id: string;
+            /** Event Type */
+            event_type: string;
+            /** Actor Id */
+            actor_id: string | null;
+            /** Actor Username */
+            actor_username: string | null;
+            /** Resource Type */
+            resource_type: string;
+            /** Resource Id */
+            resource_id: string | null;
+            /** Correlation Id */
+            correlation_id: string | null;
+            /** Metadata */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** BlockResponse */
         BlockResponse: {
@@ -976,6 +1280,17 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** CloudGateResponse */
+        CloudGateResponse: {
+            /** Configured */
+            configured: boolean;
+            /** Confirmed */
+            confirmed: boolean;
+            /** Ready */
+            ready: boolean;
+            /** Blockers */
+            blockers: string[];
         };
         /** CompletenessDocumentResponse */
         CompletenessDocumentResponse: {
@@ -1173,6 +1488,26 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** HardDeleteConfirmation */
+        HardDeleteConfirmation: {
+            /** Confirmation Token */
+            confirmation_token: string;
+        };
+        /** HardDeleteRequestPayload */
+        HardDeleteRequestPayload: {
+            /** Reason */
+            reason: string;
+        };
+        /** HardDeleteRequestResponse */
+        HardDeleteRequestResponse: {
+            /** Confirmation Token */
+            confirmation_token: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+        };
         /** JobResponse */
         JobResponse: {
             /** Id */
@@ -1189,6 +1524,23 @@ export interface components {
             retry_reason: string | null;
             /** Steps */
             steps: components["schemas"]["StepResponse"][];
+        };
+        /** LifecycleResponse */
+        LifecycleResponse: {
+            /** State */
+            state: string;
+            /** Version */
+            version: number;
+            /** Editable */
+            editable: boolean;
+            /** Can Complete */
+            can_complete: boolean;
+            /** Can Archive */
+            can_archive: boolean;
+            /** Can Reopen */
+            can_reopen: boolean;
+            /** Completion Blockers */
+            completion_blockers: string[];
         };
         /** LiveDraftResponse */
         LiveDraftResponse: {
@@ -1397,6 +1749,64 @@ export interface components {
          * @enum {string}
          */
         ProcessingStepName: "validation" | "parsing_ocr" | "structure_extraction" | "seal_detection" | "classification" | "candidate_extraction";
+        /** QueueJobResponse */
+        QueueJobResponse: {
+            /** Id */
+            id: string;
+            /** Document Id */
+            document_id: string;
+            /** Application Id */
+            application_id: string;
+            /** Filename */
+            filename: string;
+            /** Status */
+            status: string;
+            /** Attempts */
+            attempts: number;
+            /** Error Code */
+            error_code: string | null;
+            /** Retry Reason */
+            retry_reason: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** QueueResponse */
+        QueueResponse: {
+            /** By Status */
+            by_status: {
+                [key: string]: number;
+            };
+            /** Waiting */
+            waiting: number;
+            /** Running */
+            running: number;
+            /** Failed */
+            failed: number;
+            /** Manual Handling */
+            manual_handling: number;
+            oldest_waiting: components["schemas"]["QueueJobResponse"] | null;
+            /** Recent Failures */
+            recent_failures: components["schemas"]["QueueJobResponse"][];
+            /** Workers */
+            workers: components["schemas"]["WorkerHeartbeatResponse"][];
+        };
+        /** ReassignRequest */
+        ReassignRequest: {
+            /** Version */
+            version: number;
+            /** Owner Id */
+            owner_id: string;
+        };
+        /** ReopenRequest */
+        ReopenRequest: {
+            /** Version */
+            version: number;
+            /** Reason */
+            reason: string;
+        };
         /** ResolutionRequest */
         ResolutionRequest: {
             /**
@@ -1681,6 +2091,11 @@ export interface components {
             /** Cell Bbox */
             cell_bbox?: unknown[] | null;
         };
+        /** StateChangeRequest */
+        StateChangeRequest: {
+            /** Version */
+            version: number;
+        };
         /** StepResponse */
         StepResponse: {
             /** Name */
@@ -1872,6 +2287,20 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** WorkerHeartbeatResponse */
+        WorkerHeartbeatResponse: {
+            /** Worker Id */
+            worker_id: string;
+            /** Hostname */
+            hostname: string;
+            /**
+             * Last Seen At
+             * Format: date-time
+             */
+            last_seen_at: string;
+            /** Healthy */
+            healthy: boolean;
         };
         /** RunDetailResponse */
         app__completeness_api__RunDetailResponse: {
@@ -2096,6 +2525,37 @@ export interface operations {
             };
         };
     };
+    cloud_gate_api_v1_meta_cloud_gate_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CloudGateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_fields_api_v1_meta_fields_get: {
         parameters: {
             query?: never;
@@ -2114,6 +2574,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FieldMetaResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    queue_status_api_v1_admin_queue_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_admin_applications_api_v1_admin_applications_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminApplicationResponse"][];
                 };
             };
             /** @description Validation Error */
@@ -2906,6 +3428,277 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ApplicationResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_lifecycle_api_v1_applications__application_id__lifecycle_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LifecycleResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_application_api_v1_applications__application_id__complete_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StateChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LifecycleResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reopen_application_api_v1_applications__application_id__reopen_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReopenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LifecycleResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_application_api_v1_applications__application_id__archive_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StateChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LifecycleResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reassign_application_api_v1_applications__application_id__reassign_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReassignRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LifecycleResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_hard_delete_api_v1_applications__application_id__hard_delete_requests_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HardDeleteRequestPayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HardDeleteRequestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_hard_delete_api_v1_applications__application_id__hard_delete_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-CSRF-Token"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+                icrm_csrf?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HardDeleteConfirmation"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3922,6 +4715,77 @@ export interface operations {
             };
         };
     };
+    list_audit_events_api_v1_audit_events_get: {
+        parameters: {
+            query?: {
+                event_type?: string | null;
+                resource_type?: string | null;
+                resource_id?: string | null;
+                actor_id?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEventResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_application_audit_events_api_v1_applications__application_id__audit_events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: {
+                icrm_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEventResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     live_health_live_get: {
         parameters: {
             query?: never;
@@ -3960,7 +4824,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        [key: string]: string;
+                        [key: string]: unknown;
                     };
                 };
             };

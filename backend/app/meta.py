@@ -8,10 +8,33 @@ lives in ``app.fields`` and this endpoint exposes it to the frontend.
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from app.config import settings
 from app.dependencies import CurrentUser, Db
 from app.fields import FIELDS, GROUP_LABELS, FieldGroup
 
 router = APIRouter(prefix="/meta", tags=["meta"])
+
+
+class CloudGateResponse(BaseModel):
+    configured: bool
+    confirmed: bool
+    ready: bool
+    blockers: list[str]
+
+
+@router.get("/cloud-gate", response_model=CloudGateResponse)
+def cloud_gate(db: Db, user: CurrentUser) -> CloudGateResponse:
+    """Cloud readiness gate: whether DeepSeek extraction is enabled.
+
+    Missing credentials or a missing no-training/retention confirmation
+    disable the cloud path; local candidate extraction continues regardless.
+    """
+    return CloudGateResponse(
+        configured=settings.cloud_configured,
+        confirmed=settings.cloud_confirmed,
+        ready=settings.cloud_ready,
+        blockers=settings.cloud_gate_blockers,
+    )
 
 
 class FieldMetaResponse(BaseModel):

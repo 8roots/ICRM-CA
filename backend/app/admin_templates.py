@@ -9,10 +9,11 @@ product x borrower-type key may have at most one published version.
 from datetime import UTC, datetime
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.exc import IntegrityError
 
+from app.audit import TEMPLATE_PUBLISHED, TEMPLATE_RETIRED, record_audit, request_correlation_id
 from app.classification import CATEGORY_LABELS, MaterialCategory
 from app.completeness import template_content_hash, validate_template_items
 from app.dependencies import Administrator, Csrf, Db
@@ -223,6 +224,7 @@ def update_template(
 @router.post("/{template_id}/publish", response_model=TemplateResponse)
 def publish_template(
     template_id: str,
+    request: Request,
     db: Db,
     admin: Administrator,
     csrf: Csrf,
@@ -246,6 +248,20 @@ def publish_template(
         )
     template.status = TemplateStatus.PUBLISHED
     template.published_at = datetime.now(UTC)
+    record_audit(
+        db,
+        event_type=TEMPLATE_PUBLISHED,
+        actor=admin,
+        resource_type="template",
+        resource_id=template.id,
+        correlation_id=request_correlation_id(request),
+        metadata={
+            "code": template.code,
+            "version": template.version,
+            "product": template.product,
+            "borrower_type": template.borrower_type,
+        },
+    )
     db.commit()
     return as_template(template)
 
@@ -304,6 +320,7 @@ def copy_template(
 @router.post("/{template_id}/retire", response_model=TemplateResponse)
 def retire_template(
     template_id: str,
+    request: Request,
     db: Db,
     admin: Administrator,
     csrf: Csrf,
@@ -313,5 +330,14 @@ def retire_template(
         raise HTTPException(status.HTTP_409_CONFLICT, "Only published templates can be retired")
     template.status = TemplateStatus.RETIRED
     template.retired_at = datetime.now(UTC)
+    record_audit(
+        db,
+        event_type=TEMPLATE_RETIRED,
+        actor=admin,
+        resource_type="template",
+        resource_id=template.id,
+        correlation_id=request_correlation_id(request),
+        metadata={"code": template.code, "version": template.version},
+    )
     db.commit()
     return as_template(template)

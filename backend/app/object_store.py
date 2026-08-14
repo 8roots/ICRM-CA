@@ -23,11 +23,14 @@ class MinioObjects:
     def delete(self, key: str) -> None:
         self.client.remove_object(self.bucket, key)
 
+    def bucket_exists(self) -> bool:
+        return self.client.bucket_exists(self.bucket)
+
 
 def minio_objects(settings: Settings) -> MinioObjects:
     return MinioObjects(
         settings.minio_endpoint,
-        settings.minio_access_key,
-        settings.minio_secret_key,
+        settings.effective_minio_access_key,
+        settings.effective_minio_secret_key,
         settings.minio_bucket,
     )

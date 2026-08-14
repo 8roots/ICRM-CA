@@ -13,6 +13,16 @@ from datetime import datetime
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.audit import (
+    CLASSIFICATION_CONFIRMED,
+    COMPLETENESS_RUN_CREATED,
+    COMPLETENESS_VIEWED,
+    MAPPING_CREATED,
+    MAPPING_DELETED,
+    WAIVER_CREATED,
+    record_audit,
+    request_correlation_id,
+)
 from app.classification import CATEGORY_LABELS, MaterialCategory
 from app.completeness import (
     CONDITION_LABELS,
@@ -35,6 +45,7 @@ from app.completeness import (
 )
 from app.dependencies import Csrf, CurrentUser, Db
 from app.idempotency import add_idempotency_record, replay_resource_id
+from app.lifecycle_guard import require_mutable
 from app.models import (
     Application,
     ChecklistItem,
@@ -309,6 +320,16 @@ def get_completeness(
     application_id: str, request: Request, db: Db, user: CurrentUser
 ) -> LiveDraftResponse:
     application = owned_application(db, application_id, user.id)
+    record_audit(
+        db,
+        event_type=COMPLETENESS_VIEWED,
+        actor=user,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=request_correlation_id(request),
+        dedupe_minutes=5,
+    )
+    db.commit()
     template = published_applicable_template(db, application)
     if template is None:
         return LiveDraftResponse(
@@ -409,13 +430,15 @@ def confirm_classification(
     application_id: str,
     document_id: str,
     payload: ConfirmClassificationRequest,
+    request: Request,
     response: Response,
     db: Db,
     user: CurrentUser,
     csrf: Csrf,
     idempotency_key: str = Header(alias="Idempotency-Key", min_length=1, max_length=255),
 ) -> CompletenessDocumentResponse:
-    owned_application(db, application_id, user.id)
+    application = owned_application(db, application_id, user.id)
+    require_mutable(db, application)
     document = document_in_application(db, application_id, document_id)
     request_hash = hashlib.sha256(payload.model_dump_json().encode()).hexdigest()
     operation = f"confirm_classification:{document_id}"
@@ -445,6 +468,15 @@ def confirm_classification(
         db, user.id, operation, idempotency_key, request_hash, confirmation.id
     )
     mark_runs_stale(db, application_id, "classification_change")
+    record_audit(
+        db,
+        event_type=CLASSIFICATION_CONFIRMED,
+        actor=user,
+        resource_type="document",
+        resource_id=document_id,
+        correlation_id=request_correlation_id(request),
+        metadata={"application_id": application_id, "category": confirmation.category},
+    )
     db.commit()
     return _document_response(db, document, confirmation)
 
@@ -491,6 +523,7 @@ def _document_response(
 def create_mapping(
     application_id: str,
     payload: CreateMappingRequest,
+    request: Request,
     response: Response,
     db: Db,
     user: CurrentUser,
@@ -498,6 +531,7 @@ def create_mapping(
     idempotency_key: str = Header(alias="Idempotency-Key", min_length=1, max_length=255),
 ) -> MappingResponse:
     application = owned_application(db, application_id, user.id)
+    require_mutable(db, application)
     template = published_applicable_template(db, application)
     if template is None:
         raise HTTPException(status.HTTP_409_CONFLICT, "No published applicable template")
@@ -531,6 +565,15 @@ def create_mapping(
     db.flush()
     add_idempotency_record(db, user.id, operation, idempotency_key, request_hash, mapping.id)
     mark_runs_stale(db, application_id, "mapping_change")
+    record_audit(
+        db,
+        event_type=MAPPING_CREATED,
+        actor=user,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=request_correlation_id(request),
+        metadata={"mapping_id": mapping.id, "document_id": document.id, "item_id": item.id},
+    )
     db.commit()
     return as_mapping(mapping)
 
@@ -539,11 +582,13 @@ def create_mapping(
 def delete_mapping(
     application_id: str,
     mapping_id: str,
+    request: Request,
     db: Db,
     user: CurrentUser,
     csrf: Csrf,
 ) -> None:
-    owned_application(db, application_id, user.id)
+    application = owned_application(db, application_id, user.id)
+    require_mutable(db, application)
     mapping = (
         db.query(DocumentChecklistMapping)
         .filter_by(id=mapping_id, application_id=application_id)
@@ -553,6 +598,15 @@ def delete_mapping(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Mapping not found")
     db.delete(mapping)
     mark_runs_stale(db, application_id, "mapping_change")
+    record_audit(
+        db,
+        event_type=MAPPING_DELETED,
+        actor=user,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=request_correlation_id(request),
+        metadata={"mapping_id": mapping_id, "document_id": mapping.document_id},
+    )
     db.commit()
 
 
@@ -564,6 +618,7 @@ def delete_mapping(
 def create_waiver(
     application_id: str,
     payload: CreateWaiverRequest,
+    request: Request,
     response: Response,
     db: Db,
     user: CurrentUser,
@@ -571,6 +626,7 @@ def create_waiver(
     idempotency_key: str = Header(alias="Idempotency-Key", min_length=1, max_length=255),
 ) -> WaiverResponse:
     application = owned_application(db, application_id, user.id)
+    require_mutable(db, application)
     template = published_applicable_template(db, application)
     if template is None:
         raise HTTPException(status.HTTP_409_CONFLICT, "No published applicable template")
@@ -599,6 +655,15 @@ def create_waiver(
     db.flush()
     add_idempotency_record(db, user.id, operation, idempotency_key, request_hash, waiver.id)
     mark_runs_stale(db, application_id, "waiver_change")
+    record_audit(
+        db,
+        event_type=WAIVER_CREATED,
+        actor=user,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=request_correlation_id(request),
+        metadata={"waiver_id": waiver.id, "item_id": item.id},
+    )
     db.commit()
     return as_waiver(waiver)
 
@@ -651,6 +716,7 @@ def create_completeness_run(
     idempotency_key: str = Header(alias="Idempotency-Key", min_length=1, max_length=255),
 ) -> RunDetailResponse:
     application = owned_application(db, application_id, user.id)
+    require_mutable(db, application)
     template = published_applicable_template(db, application)
     if template is None:
         raise HTTPException(
@@ -688,6 +754,20 @@ def create_completeness_run(
     db.flush()
     add_idempotency_record(
         db, user.id, operation, idempotency_key, request_hash, run.id
+    )
+    record_audit(
+        db,
+        event_type=COMPLETENESS_RUN_CREATED,
+        actor=user,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=request_correlation_id(request),
+        metadata={
+            "run_id": run.id,
+            "template_id": template.id,
+            "template_code": template.code,
+            "template_version": template.version,
+        },
     )
     db.commit()
     return as_run_detail(run)

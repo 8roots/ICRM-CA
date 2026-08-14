@@ -1,0 +1,168 @@
+# Production Compose: only the TLS reverse proxy (proxy) is exposed.
+# Postgres, MinIO, the API, and the worker never publish ports. All secrets
+# come from mounted secret files (./secrets/... by default) or Docker
+# secrets, never from .env dev values. Run with:
+#
+#   docker compose -f docker-compose.prod.yml up --build -d
+#
+# Required files (create before starting; see .env.prod.example):
+#   ./secrets/postgres_password
+#   ./secrets/minio_root_user
+#   ./secrets/minio_root_password
+#   ./secrets/database_url          (full SQLAlchemy URL incl. credentials)
+#   ./secrets/deepseek_api_key      (may be empty to keep DeepSeek disabled)
+#   ./certs/fullchain.pem           (TLS certificate chain)
+#   ./certs/privkey.pem             (TLS private key)
+
+services:
+  proxy:
+    build:
+      context: ./frontend
+      args:
+        NGINX_CONF: nginx.prod.conf
+    ports:
+      - "${ICRM_HTTPS_PORT:-443}:443"
+      - "${ICRM_HTTP_PORT:-80}:80"
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "https://127.0.0.1/", "--no-check-certificate"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  postgres:
+    image: postgres:16.8-alpine
+    environment:
+      POSTGRES_DB: icrm
+      POSTGRES_USER: icrm
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U icrm -d icrm"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: minio/minio:RELEASE.2025-02-07T23-21-09Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER_FILE: /run/secrets/minio_root_user
+      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_root_password
+    secrets:
+      - minio_root_user
+      - minio_root_password
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-02-08T19-14-21Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        mc alias set local http://minio:9000 "$$(cat /run/secrets/minio_root_user)"
+        "$$(cat /run/secrets/minio_root_password)" &&
+        mc mb --ignore-existing local/materials
+    secrets:
+      - minio_root_user
+      - minio_root_password
+    restart: "no"
+
+  migrate:
+    build: ./backend
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: &backend-environment
+      ICRM_PRODUCTION: "true"
+      ICRM_COOKIE_SECURE: "true"
+      ICRM_DATABASE_URL_FILE: /run/secrets/database_url
+      ICRM_MINIO_ENDPOINT: minio:9000
+      ICRM_MINIO_ACCESS_KEY_FILE: /run/secrets/minio_root_user
+      ICRM_MINIO_SECRET_KEY_FILE: /run/secrets/minio_root_password
+      ICRM_MINIO_BUCKET: materials
+      ICRM_DEEPSEEK_BASE_URL: ${ICRM_DEEPSEEK_BASE_URL:-}
+      ICRM_DEEPSEEK_API_KEY_FILE: /run/secrets/deepseek_api_key
+      ICRM_DEEPSEEK_MODEL: ${ICRM_DEEPSEEK_MODEL:-}
+      ICRM_CLOUD_TRAINING_CONFIRMATION: ${ICRM_CLOUD_TRAINING_CONFIRMATION:-false}
+      ICRM_CLOUD_RETENTION_DAYS: ${ICRM_CLOUD_RETENTION_DAYS:-}
+      ICRM_MAX_MATERIAL_BYTES: ${ICRM_MAX_MATERIAL_BYTES:-209715200}
+      ICRM_MAX_APPLICATION_BYTES: ${ICRM_MAX_APPLICATION_BYTES:-2147483648}
+      ICRM_MAX_APPLICATION_MATERIALS: ${ICRM_MAX_APPLICATION_MATERIALS:-100}
+    secrets:
+      - database_url
+      - minio_root_user
+      - minio_root_password
+      - deepseek_api_key
+    restart: "no"
+
+  api:
+    build: ./backend
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      minio-init:
+        condition: service_completed_successfully
+    environment: *backend-environment
+    secrets:
+      - database_url
+      - minio_root_user
+      - minio_root_password
+      - deepseek_api_key
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  worker:
+    build: ./backend
+    command: ["python", "-m", "app.worker"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      minio-init:
+        condition: service_completed_successfully
+    environment: *backend-environment
+    secrets:
+      - database_url
+      - minio_root_user
+      - minio_root_password
+      - deepseek_api_key
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,time; assert time.time()-os.path.getmtime('/tmp/icrm-worker-heartbeat') < 30"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password
+  minio_root_user:
+    file: ./secrets/minio_root_user
+  minio_root_password:
+    file: ./secrets/minio_root_password
+  database_url:
+    file: ./secrets/database_url
+  deepseek_api_key:
+    file: ./secrets/deepseek_api_key
+
+volumes:
+  postgres-data:
+  minio-data:

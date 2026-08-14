@@ -129,9 +129,14 @@ function staleReasonLabel(reason: string | null | undefined): string | null {
   return reason ? (labels[reason] ?? reason) : null
 }
 
+const editable = ref(true)
+
 onMounted(() => {
   refresh()
   refreshRuns()
+  request<{ editable: boolean }>(`/api/v1/applications/${applicationId}/lifecycle`)
+    .then((lifecycle) => { editable.value = lifecycle.editable !== false })
+    .catch(() => { editable.value = true })
 })
 </script>
 
@@ -147,15 +152,23 @@ onMounted(() => {
       title="红线结果仅供审批辅助，需人工复核；系统不认定、也不暗示本笔贷款合规或获批。"
     />
 
+    <el-alert
+      v-if="!editable"
+      type="info"
+      title="申请已归档或完成，处于只读状态。"
+      :closable="false"
+    />
+
     <h2>规则上下文（必须显式确认，系统不根据地址推断）</h2>
     <div class="toolbar">
       <el-input
         v-model="contextInput"
         class="context-input"
+        :disabled="!editable"
         :aria-label="'规则上下文'"
         placeholder="例如：全国"
       />
-      <el-button type="primary" :aria-label="'确认规则上下文'" @click="confirmContext">
+      <el-button type="primary" :disabled="!editable" :aria-label="'确认规则上下文'" @click="confirmContext">
         {{ preview.rule_context ? '更新规则上下文' : '确认规则上下文' }}
       </el-button>
       <el-tag v-if="preview.rule_context" type="success" class="context-tag">
@@ -272,7 +285,7 @@ onMounted(() => {
     <div class="toolbar">
       <el-button
         type="primary"
-        :disabled="!!preview.formal_run_blocked_reason"
+        :disabled="!!preview.formal_run_blocked_reason || !editable"
         :loading="running"
         :aria-label="'执行正式红线评估'"
         @click="runFormal"

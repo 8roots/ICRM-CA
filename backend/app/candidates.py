@@ -11,13 +11,21 @@ import hashlib
 from datetime import datetime
 from typing import Literal
 
-from fastapi import APIRouter, Header, HTTPException, Response, status
+from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.audit import (
+    CANDIDATES_VIEWED,
+    RESOLUTION_CREATED,
+    RESOLUTIONS_VIEWED,
+    record_audit,
+    request_correlation_id,
+)
 from app.completeness import mark_runs_stale
 from app.dependencies import Csrf, CurrentUser, Db
 from app.fields import FIELDS, SUBJECT_LABELS, SubjectRole, field_def
 from app.idempotency import add_idempotency_record, replay_resource_id
+from app.lifecycle_guard import require_mutable
 from app.models import (
     Application,
     CandidateFact,
@@ -191,8 +199,20 @@ def as_cloud_call(call: CloudExtractionCall) -> CloudCallResponse:
 
 
 @router.get("/{application_id}/candidates", response_model=list[CandidateResponse])
-def list_candidates(application_id: str, db: Db, user: CurrentUser) -> list[CandidateResponse]:
+def list_candidates(
+    application_id: str, request: Request, db: Db, user: CurrentUser
+) -> list[CandidateResponse]:
     owned_application(db, application_id, user.id)
+    record_audit(
+        db,
+        event_type=CANDIDATES_VIEWED,
+        actor=user,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=request_correlation_id(request),
+        dedupe_minutes=5,
+    )
+    db.commit()
     rows = (
         db.query(CandidateFact, Document.filename, DocumentOutput.version)
         .join(Document, CandidateFact.document_id == Document.id)
@@ -205,8 +225,20 @@ def list_candidates(application_id: str, db: Db, user: CurrentUser) -> list[Cand
 
 
 @router.get("/{application_id}/resolutions", response_model=list[ResolutionResponse])
-def list_resolutions(application_id: str, db: Db, user: CurrentUser) -> list[ResolutionResponse]:
+def list_resolutions(
+    application_id: str, request: Request, db: Db, user: CurrentUser
+) -> list[ResolutionResponse]:
     owned_application(db, application_id, user.id)
+    record_audit(
+        db,
+        event_type=RESOLUTIONS_VIEWED,
+        actor=user,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=request_correlation_id(request),
+        dedupe_minutes=5,
+    )
+    db.commit()
     resolutions = (
         db.query(Resolution)
         .filter_by(application_id=application_id)
@@ -241,13 +273,15 @@ def _candidate_in_application(db: Db, application_id: str, candidate_id: str) ->
 def create_resolution(
     application_id: str,
     payload: ResolutionRequest,
+    request: Request,
     response: Response,
     db: Db,
     user: CurrentUser,
     csrf: Csrf,
     idempotency_key: str = Header(alias="Idempotency-Key", min_length=1, max_length=255),
 ) -> ResolutionResponse:
-    owned_application(db, application_id, user.id)
+    application = owned_application(db, application_id, user.id)
+    require_mutable(db, application)
     definition = field_def(payload.field_key)
     request_hash = hashlib.sha256(payload.model_dump_json().encode()).hexdigest()
     operation = f"create_resolution:{application_id}"
@@ -321,6 +355,19 @@ def create_resolution(
     # any current formal completeness and redline reports.
     mark_runs_stale(db, application_id, "condition_context_change")
     mark_redline_runs_stale(db, application_id, "critical_input_change")
+    record_audit(
+        db,
+        event_type=RESOLUTION_CREATED,
+        actor=user,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=request_correlation_id(request),
+        metadata={
+            "field_key": payload.field_key,
+            "resolution_type": payload.resolution_type,
+            "resolution_id": resolution.id,
+        },
+    )
     db.commit()
     return as_resolution(resolution)
 

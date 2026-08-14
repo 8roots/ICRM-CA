@@ -85,6 +85,14 @@ class LprImportStatus(StrEnum):
     PUBLISHED = "published"
 
 
+class LifecycleState(StrEnum):
+    DRAFT = "draft"
+    PROCESSING = "processing"
+    PENDING_REVIEW = "pending_review"
+    REVIEW_COMPLETE = "review_complete"
+    ARCHIVED = "archived"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -120,7 +128,11 @@ class Application(Base):
     application_date: Mapped[date] = mapped_column(Date)
     proposed_signing_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     owner_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
-    lifecycle_state: Mapped[str] = mapped_column(String(40), default="draft")
+    lifecycle_state: Mapped[str] = mapped_column(
+        String(40), default=LifecycleState.DRAFT, index=True
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
@@ -743,3 +755,80 @@ class IdempotencyRecord(Base):
     key: Mapped[str] = mapped_column(String(255))
     request_hash: Mapped[str] = mapped_column(String(64))
     resource_id: Mapped[str] = mapped_column(String(36))
+
+
+class AuditEvent(Base):
+    """Append-only business audit event.
+
+    Rows are never mutated or deleted through any API. Content is restricted
+    to non-sensitive metadata (event type, actor, resource ids, correlation
+    id, small metadata dict); material text, prompts, and model responses
+    never appear here (see ``CloudExtractionCall`` for the separately
+    authorized restricted cloud audit). There is deliberately no foreign key
+    to ``applications`` so the trail survives a whole-application hard delete.
+    """
+
+    __tablename__ = "audit_events"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    event_type: Mapped[str] = mapped_column(String(80), index=True)
+    actor_id: Mapped[str | None] = mapped_column(
+        ForeignKey("users.id"), nullable=True, index=True
+    )
+    actor_username: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    resource_type: Mapped[str] = mapped_column(String(40), index=True)
+    resource_id: Mapped[str | None] = mapped_column(String(40), nullable=True, index=True)
+    correlation_id: Mapped[str | None] = mapped_column(String(40), nullable=True, index=True)
+    details: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True
+    )
+
+
+class ApplicationTombstone(Base):
+    """Non-sensitive record left after a whole-application hard delete.
+
+    Only the application internal id, operator, time, and delete reason are
+    kept. Any MinIO object keys that could not be removed during the delete
+    are listed in ``remaining_object_keys`` so the failure is visible and
+    recoverable.
+    """
+
+    __tablename__ = "application_tombstones"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)  # application id
+    deleted_by: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    deleted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    reason: Mapped[str] = mapped_column(Text)
+    remaining_object_keys: Mapped[list] = mapped_column(JSON, default=list)
+
+
+class WorkerHeartbeat(Base):
+    __tablename__ = "worker_heartbeats"
+
+    worker_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    hostname: Mapped[str] = mapped_column(String(100))
+    last_seen_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+
+class HardDeleteRequest(Base):
+    """Phase one of the two-phase admin hard delete; the token is the
+    second confirmation required before any sensitive data is removed."""
+
+    __tablename__ = "hard_delete_requests"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    application_id: Mapped[str] = mapped_column(
+        ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    reason: Mapped[str] = mapped_column(Text)
+    actor_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )

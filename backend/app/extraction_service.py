@@ -13,6 +13,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
+from app.audit import CLOUD_CALL, record_audit
 from app.cloud_extraction import (
     PROMPT_VERSION,
     CloudCandidate,
@@ -221,6 +222,22 @@ def _record_call(
             },
             redacted_response={"results": response} if response is not None else None,
         )
+    )
+    record_audit(
+        db,
+        event_type=CLOUD_CALL,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=f"job:{output_id}",
+        metadata={
+            "document_id": document_id,
+            "output_id": output_id,
+            "status": status,
+            "error_code": error_code,
+            "model": model,
+            "prompt_version": PROMPT_VERSION,
+            "redaction_version": REDACTION_VERSION,
+        },
     )
 
 

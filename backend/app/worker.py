@@ -3,9 +3,10 @@ import socket
 import tempfile
 import threading
 import time
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from sqlalchemy.orm import Session
 from urllib3.exceptions import HTTPError as Urllib3Error
 
 from app.classification import run_classification
@@ -14,7 +15,8 @@ from app.config import settings
 from app.database import Database
 from app.document_jobs import claim_next_job, finish_job, recover_stale_jobs, renew_claim, utcnow
 from app.extraction_service import run_candidate_extraction
-from app.models import DocumentOutput, JobStatus, ProcessingStepName
+from app.logging_config import setup_json_logging
+from app.models import DocumentOutput, JobStatus, ProcessingStepName, WorkerHeartbeat
 from app.object_store import MinioObjects, minio_objects
 from app.paddle_engine import PaddleEngine
 from app.parsed_outputs import store_parsed_output
@@ -22,10 +24,22 @@ from app.parsing import IMAGE_EXTENSIONS, PDF_EXTENSIONS, ImageAnalysisEngine, p
 from app.structured import parse_structured
 from app.validation import ValidationError, validate
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+setup_json_logging()
+logger = logging.getLogger("icrm.worker")
 heartbeat = Path("/tmp/icrm-worker-heartbeat")
 LEASE_RENEWAL_SECONDS = 30
 PAGE_FORMAT_EXTENSIONS = PDF_EXTENSIONS | IMAGE_EXTENSIONS
+
+
+def record_heartbeat(db: Session) -> None:
+    heartbeat.touch()
+    worker_id = socket.gethostname()
+    existing = db.get(WorkerHeartbeat, worker_id)
+    if existing:
+        existing.last_seen_at = datetime.now(UTC)
+    else:
+        db.add(WorkerHeartbeat(worker_id=worker_id, hostname=worker_id))
+    db.commit()
 
 
 def process_one(
@@ -159,18 +173,24 @@ def process_one(
 
 
 def run() -> None:
-    database = Database(settings.database_url)
+    database = Database(settings.effective_database_url)
     objects = minio_objects(settings)
     worker_id = socket.gethostname()
     image_engine = PaddleEngine(settings.models_dir)
     cloud_client = DeepSeekClient(
         settings.deepseek_base_url,
-        settings.deepseek_api_key,
+        settings.effective_deepseek_api_key,
         settings.deepseek_model,
+        cloud_confirmed=settings.cloud_confirmed,
     )
+    if not settings.cloud_ready:
+        logger.info(
+            "cloud extraction disabled blockers=%s", ",".join(settings.cloud_gate_blockers)
+        )
     while True:
         worked = process_one(database, objects, worker_id, image_engine, cloud_client)
-        heartbeat.touch()
+        with database.session() as db:
+            record_heartbeat(db)
         if not worked:
             time.sleep(2)
 

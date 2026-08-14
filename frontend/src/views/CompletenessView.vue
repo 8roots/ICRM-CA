@@ -33,6 +33,7 @@ const running = ref(false)
 const classificationSelections = ref<Record<string, string>>({})
 const waiverReasons = ref<Record<string, string>>({})
 const latestRun = ref<RunDetailResponse | null>(null)
+const editable = ref(true)
 
 const summary = computed(() => (draft.value ? summaryOf(draft.value) : null))
 
@@ -164,6 +165,9 @@ const stateTagTypes: Record<string, 'success' | 'danger' | 'warning' | 'info'> =
 onMounted(() => {
   refresh()
   refreshRuns()
+  request<{ editable: boolean }>(`/api/v1/applications/${applicationId}/lifecycle`)
+    .then((lifecycle) => { editable.value = lifecycle.editable !== false })
+    .catch(() => { editable.value = true })
 })
 </script>
 
@@ -171,6 +175,13 @@ onMounted(() => {
   <section v-if="draft" v-loading="loading">
     <router-link to="/applications">返回申请列表</router-link>
     <h1>材料完备性与正式报告</h1>
+
+    <el-alert
+      v-if="!editable"
+      type="info"
+      title="申请已归档或完成，处于只读状态。"
+      :closable="false"
+    />
 
     <div v-if="draft.template">
       <el-descriptions border :column="3" class="template-info">
@@ -195,7 +206,7 @@ onMounted(() => {
       <div class="toolbar">
         <el-button
           type="primary"
-          :disabled="!!draft.formal_run_blocked_reason"
+          :disabled="!!draft.formal_run_blocked_reason || !editable"
           :loading="running"
           :aria-label="'执行正式完备性检查'"
           @click="runFormal"
@@ -272,6 +283,7 @@ onMounted(() => {
                 size="small"
                 type="primary"
                 plain
+                :disabled="!editable"
                 :aria-label="`确认映射-${doc.filename}-${scope.row.label}`"
                 @click="createMapping(doc.id, scope.row.id)"
               >确认映射</el-button>
@@ -285,6 +297,7 @@ onMounted(() => {
                 v-model="waiverReasons[scope.row.id]"
                 size="small"
                 class="waiver-input"
+                :disabled="!editable"
                 :aria-label="`豁免理由-${scope.row.label}`"
                 placeholder="豁免理由（必填）"
               />
@@ -292,6 +305,7 @@ onMounted(() => {
                 size="small"
                 type="warning"
                 plain
+                :disabled="!editable"
                 :aria-label="`人工豁免-${scope.row.label}`"
                 @click="createWaiver(scope.row)"
               >豁免</el-button>
@@ -335,6 +349,7 @@ onMounted(() => {
           <template #default="scope">
             <el-select
               v-model="classificationSelections[scope.row.id]"
+              :disabled="!editable"
               :aria-label="`选择类别-${scope.row.filename}`"
               placeholder="选择类别"
               size="small"
@@ -344,6 +359,7 @@ onMounted(() => {
             <el-button
               size="small"
               type="primary"
+              :disabled="!editable"
               :aria-label="`确认分类-${scope.row.filename}`"
               @click="confirmClassification(scope.row)"
             >确认</el-button>
@@ -370,6 +386,7 @@ onMounted(() => {
               size="small"
               type="danger"
               plain
+              :disabled="!editable"
               :aria-label="`删除映射-${scope.row.document_filename}-${scope.row.item_label}`"
               @click="removeMapping(scope.row)"
             >删除</el-button>

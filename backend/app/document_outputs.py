@@ -5,9 +5,11 @@ from typing import Literal
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.audit import DOCUMENT_VIEWED, EVIDENCE_REVIEW_CREATED, record_audit, request_correlation_id
 from app.completeness import mark_runs_stale
 from app.dependencies import Csrf, CurrentUser, Db
 from app.idempotency import add_idempotency_record, replay_resource_id
+from app.lifecycle_guard import require_mutable
 from app.models import (
     Application,
     Document,
@@ -202,8 +204,21 @@ def as_output(output: DocumentOutput) -> OutputResponse:
 
 
 @router.get("/documents/{document_id}/outputs", response_model=list[OutputResponse])
-def list_outputs(document_id: str, db: Db, user: CurrentUser) -> list[OutputResponse]:
+def list_outputs(
+    document_id: str, request: Request, db: Db, user: CurrentUser
+) -> list[OutputResponse]:
     document = owned_document(db, document_id, user.id)
+    record_audit(
+        db,
+        event_type=DOCUMENT_VIEWED,
+        actor=user,
+        resource_type="document",
+        resource_id=document_id,
+        correlation_id=request_correlation_id(request),
+        metadata={"application_id": document.application_id},
+        dedupe_minutes=5,
+    )
+    db.commit()
     return [as_output(output) for output in sorted(document.outputs, key=lambda item: item.version)]
 
 
@@ -223,12 +238,15 @@ def list_reviews(output_id: str, db: Db, user: CurrentUser) -> list[EvidenceRevi
 def create_review(
     output_id: str,
     payload: EvidenceReviewRequest,
+    request: Request,
     db: Db,
     user: CurrentUser,
     csrf: Csrf,
     idempotency_key: str = Header(alias="Idempotency-Key", min_length=1, max_length=255),
 ) -> EvidenceReviewResponse:
     output = owned_output(db, output_id, user.id)
+    application = db.get(Application, output.document.application_id)
+    require_mutable(db, application)
     request_hash = hashlib.sha256(payload.model_dump_json().encode()).hexdigest()
     operation = f"create_evidence_review:{output_id}"
     replay_id = replay_resource_id(db, user.id, operation, idempotency_key, request_hash)
@@ -265,6 +283,20 @@ def create_review(
         db, user.id, operation, idempotency_key, request_hash, review.id
     )
     mark_runs_stale(db, output.document.application_id, "evidence_review_change")
+    record_audit(
+        db,
+        event_type=EVIDENCE_REVIEW_CREATED,
+        actor=user,
+        resource_type="document",
+        resource_id=output.document_id,
+        correlation_id=request_correlation_id(request),
+        metadata={
+            "application_id": output.document.application_id,
+            "output_id": output_id,
+            "kind": payload.kind,
+            "status": payload.status,
+        },
+    )
     db.commit()
     return as_review(review)
 

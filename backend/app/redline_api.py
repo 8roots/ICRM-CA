@@ -16,8 +16,16 @@ from datetime import UTC, date, datetime
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.audit import (
+    REDLINE_RUN_CREATED,
+    REDLINE_VIEWED,
+    RULE_CONTEXT_CONFIRMED,
+    record_audit,
+    request_correlation_id,
+)
 from app.dependencies import Csrf, CurrentUser, Db
 from app.idempotency import add_idempotency_record, replay_resource_id
+from app.lifecycle_guard import require_mutable
 from app.models import (
     Application,
     RedlineRun,
@@ -298,6 +306,16 @@ def get_redline(
     application_id: str, request: Request, db: Db, user: CurrentUser
 ) -> LiveRedlineResponse:
     application = owned_application(db, application_id, user.id)
+    record_audit(
+        db,
+        event_type=REDLINE_VIEWED,
+        actor=user,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=request_correlation_id(request),
+        dedupe_minutes=5,
+    )
+    db.commit()
     result, packages_by_id, confirmed, evaluation_date = _live_result(db, application)
     selection = result.selection
     rule = selection.package
@@ -343,13 +361,15 @@ def get_redline(
 def confirm_rule_context(
     application_id: str,
     payload: RuleContextConfirmRequest,
+    request: Request,
     response: Response,
     db: Db,
     user: CurrentUser,
     csrf: Csrf,
     idempotency_key: str = Header(alias="Idempotency-Key", min_length=1, max_length=255),
 ) -> RuleContextResponse:
-    owned_application(db, application_id, user.id)
+    application = owned_application(db, application_id, user.id)
+    require_mutable(db, application)
     request_hash = hashlib.sha256(payload.model_dump_json().encode()).hexdigest()
     operation = f"confirm_rule_context:{application_id}"
     replay_id = replay_resource_id(db, user.id, operation, idempotency_key, request_hash)
@@ -372,6 +392,15 @@ def confirm_rule_context(
     db.flush()
     add_idempotency_record(db, user.id, operation, idempotency_key, request_hash, confirmation.id)
     mark_runs_stale(db, application_id, "rule_context_change")
+    record_audit(
+        db,
+        event_type=RULE_CONTEXT_CONFIRMED,
+        actor=user,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=request_correlation_id(request),
+        metadata={"context": confirmation.context},
+    )
     db.commit()
     return _as_context(confirmation)
 
@@ -479,6 +508,7 @@ def create_redline_run(
     idempotency_key: str = Header(alias="Idempotency-Key", min_length=1, max_length=255),
 ) -> RunDetailResponse:
     application = owned_application(db, application_id, user.id)
+    require_mutable(db, application)
     result, packages_by_id, confirmed, evaluation_date = _live_result(db, application)
     rule = result.selection.package
     demo_rules = [rule] if rule and rule.demo_only else []
@@ -528,6 +558,19 @@ def create_redline_run(
     db.add(run)
     db.flush()
     add_idempotency_record(db, user.id, operation, idempotency_key, request_hash, run.id)
+    record_audit(
+        db,
+        event_type=REDLINE_RUN_CREATED,
+        actor=user,
+        resource_type="application",
+        resource_id=application_id,
+        correlation_id=request_correlation_id(request),
+        metadata={
+            "run_id": run.id,
+            "rule_id": run.rule_id,
+            "state": result_snapshot.get("state"),
+        },
+    )
     db.commit()
     return as_run_detail(run, db, application)
 
